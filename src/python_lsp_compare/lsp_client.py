@@ -9,8 +9,15 @@ from .transport import StdioJsonRpcTransport
 
 
 class LspClient:
-    def __init__(self, command: Sequence[str], timeout_seconds: float = 10.0) -> None:
-        self._transport = StdioJsonRpcTransport(command)
+    def __init__(
+        self,
+        command: Sequence[str],
+        timeout_seconds: float = 10.0,
+        *,
+        cwd: Path | None = None,
+        env: dict[str, str] | None = None,
+    ) -> None:
+        self._transport = StdioJsonRpcTransport(command, cwd=None if cwd is None else str(cwd), env=env)
         self._timeout_seconds = timeout_seconds
         self._next_request_id = 1
         self._metrics: list[CallMetric] = []

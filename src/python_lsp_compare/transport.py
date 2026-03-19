@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import threading
 from dataclasses import dataclass
@@ -20,10 +21,12 @@ class JsonRpcResponse:
 
 
 class StdioJsonRpcTransport:
-    def __init__(self, command: Sequence[str]) -> None:
+    def __init__(self, command: Sequence[str], *, cwd: str | None = None, env: dict[str, str] | None = None) -> None:
         if not command:
             raise ValueError("command must not be empty")
         self._command = list(command)
+        self._cwd = cwd
+        self._env = dict(env) if env is not None else None
         self._process: subprocess.Popen[bytes] | None = None
         self._pending: dict[int | str, Queue[JsonRpcResponse]] = {}
         self._pending_lock = threading.Lock()
@@ -44,6 +47,8 @@ class StdioJsonRpcTransport:
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            cwd=self._cwd,
+            env=self._env if self._env is not None else os.environ.copy(),
         )
         self._reader_thread = threading.Thread(target=self._read_stdout_loop, daemon=True)
         self._reader_thread.start()

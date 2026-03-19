@@ -67,6 +67,29 @@ class BenchmarkSuiteTests(unittest.TestCase):
             self.assertEqual(report["benchmark_reports"][0]["name"], "fixture_suite")
             self.assertTrue(report["benchmark_reports"][0]["success"])
 
+    def test_isolated_environment_creates_suite_venv_and_rewrites_python_command(self) -> None:
+        server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            env_capture = Path(temp_dir) / "env.json"
+            report = run_benchmarks(
+                command=[sys.executable, str(server_script), "--write-env", str(env_capture)],
+                benchmark_names=["fixture_suite"],
+                benchmark_root=Path(__file__).parent / "fixtures",
+                timeout_seconds=2.0,
+                environment_mode="isolated",
+                environment_root=Path(temp_dir) / "envs",
+            )
+            suite_report = report.benchmark_reports[0]
+            self.assertTrue(suite_report.success)
+            self.assertEqual(suite_report.environment_mode, "isolated")
+            self.assertIsNotNone(suite_report.environment_path)
+            self.assertTrue(Path(suite_report.environment_path).exists())
+
+            env_data = json.loads(env_capture.read_text(encoding="utf-8"))
+            self.assertEqual(Path(env_data["virtual_env"]), Path(suite_report.environment_path))
+            self.assertEqual(Path(env_data["sys_executable"]), Path(suite_report.python_executable))
+            self.assertTrue(env_data["path"].startswith(str(Path(suite_report.environment_path) / "Scripts")))
+
 
 if __name__ == "__main__":
     unittest.main()

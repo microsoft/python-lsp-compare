@@ -34,7 +34,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_benchmark_parser.add_argument("--benchmark", action="append", default=[], help="Benchmark suite to run. Repeatable.")
     run_benchmark_parser.add_argument("--benchmark-root", type=Path, help="Directory containing benchmark suite folders.")
     run_benchmark_parser.add_argument("--install-requirements", action="store_true", help="Install suite requirements with pip before running.")
-    run_benchmark_parser.add_argument("--python-executable", default=None, help="Python executable to use for pip installs.")
+    run_benchmark_parser.add_argument("--python-executable", default=None, help="Base Python executable to use for environment creation and pip installs.")
+    run_benchmark_parser.add_argument("--environment-mode", choices=["current", "isolated"], help="Use the current environment or a per-suite virtual environment.")
+    run_benchmark_parser.add_argument("--environment-root", type=Path, help="Directory under which isolated suite environments should be created.")
     run_benchmark_parser.add_argument("--timeout-seconds", type=float, default=10.0, help="Per-request timeout in seconds.")
     run_benchmark_parser.add_argument("--output", type=Path, help="Write the JSON report to this path.")
     run_benchmark_parser.set_defaults(func=handle_run_benchmark)
@@ -74,6 +76,7 @@ def handle_run(args: argparse.Namespace) -> int:
 def handle_run_benchmark(args: argparse.Namespace) -> int:
     command = [args.server_command, *args.server_arg]
     requested = args.benchmark or None
+    environment_mode = args.environment_mode or ("isolated" if args.install_requirements else "current")
     report = run_benchmarks(
         command=command,
         benchmark_names=requested,
@@ -81,15 +84,19 @@ def handle_run_benchmark(args: argparse.Namespace) -> int:
         benchmark_root=args.benchmark_root,
         install_requirements=args.install_requirements,
         python_executable=args.python_executable,
+        environment_mode=environment_mode,
+        environment_root=args.environment_root,
     )
     output_path = args.output or _default_output_path(f"{command[0]}-benchmarks")
     write_report(report, output_path)
     print(f"Wrote report to {output_path}")
     for benchmark in report.benchmark_reports:
         status = "ok" if benchmark.success else "failed"
-        print(f"{benchmark.name}: {status} ({benchmark.total_duration_ms:.2f} ms, {len(benchmark.points)} points)")
+        print(f"{benchmark.name}: {status} ({benchmark.total_duration_ms:.2f} ms, {len(benchmark.points)} points, env={benchmark.environment_mode})")
         if benchmark.error_message:
             print(f"  error: {benchmark.error_message}")
+        if benchmark.environment_path:
+            print(f"  environment: {benchmark.environment_path}")
         for point in benchmark.points:
             point_status = "ok" if point.success else "failed"
             mean_ms = point.summary.get("mean_ms")

@@ -91,6 +91,9 @@ class BenchmarkSuiteReport:
     workspace_dir: str
     requirements_file: str | None
     install_packages: list[str]
+    environment_mode: str
+    environment_path: str | None
+    python_executable: str
     success: bool
     total_duration_ms: float
     points: list[BenchmarkPointReport] = field(default_factory=list)
@@ -105,6 +108,9 @@ class BenchmarkSuiteReport:
             "workspace_dir": self.workspace_dir,
             "requirements_file": self.requirements_file,
             "install_packages": self.install_packages,
+            "environment_mode": self.environment_mode,
+            "environment_path": self.environment_path,
+            "python_executable": self.python_executable,
             "success": self.success,
             "total_duration_ms": self.total_duration_ms,
             "error_message": self.error_message,

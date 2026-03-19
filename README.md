@@ -9,7 +9,7 @@ It focuses on four things:
 3. Capturing request/notification timings, payload sizes, and results.
 4. Producing machine-readable reports that are easy to diff across servers.
 
-The repository also borrows an idea from `pyls-benchmarks`: benchmark suites should be package-oriented, not just API-oriented. That means testing LSP behavior against realistic dependency surfaces like SQLAlchemy-heavy code, web frameworks, and data-science imports.
+Benchmark suites are package-oriented, not just API-oriented. That means testing LSP behavior against realistic dependency surfaces like SQLAlchemy-heavy code, web frameworks, and data-science imports.
 
 ## Features
 
@@ -71,6 +71,8 @@ python -m python_lsp_compare run-benchmark \
   --server-arg=--stdio \
   --benchmark sqlalchemy \
   --benchmark web \
+  --environment-mode isolated \
+  --install-requirements \
   --output results/pyright-benchmarks.json
 ```
 
@@ -87,7 +89,11 @@ Benchmark arguments:
 - `--benchmark`: benchmark suite name, repeatable. If omitted, all suites under `benchmarks/` run.
 - `--benchmark-root`: alternate benchmark suite directory.
 - `--install-requirements`: install each suite's `requirements.txt` and extra packages with pip before running.
-- `--python-executable`: interpreter to use for pip installation.
+- `--environment-mode`: use the current process environment or create a per-suite virtual environment.
+- `--environment-root`: override where isolated environments are created. By default each suite uses its own `.venv`.
+- `--python-executable`: base interpreter to use for virtual environment creation and pip installation.
+
+If `--install-requirements` is set and no environment mode is provided, the CLI defaults to isolated environments so dependency installation does not mutate the active Python environment.
 
 ## Report Shape
 
@@ -102,17 +108,36 @@ Reports include:
 
 ## Benchmark Suites
 
-Each suite folder mirrors the pattern used in `pyls-benchmarks`:
+Each suite folder follows the same internal structure:
 
 - `config.json` describes request points and iteration counts.
 - `requirements.txt` describes the dependency surface to benchmark.
 - `src/` contains the Python files to open and query.
+- `.venv/` can be created per suite when running in isolated mode.
 
 Bundled examples:
 
 - `benchmarks/sqlalchemy`
 - `benchmarks/web`
 - `benchmarks/data_science`
+
+## Isolated Environments
+
+Benchmark suites can now run inside per-suite virtual environments. This is useful when you want to install suite dependencies without contaminating the interpreter used for development or testing.
+
+Example:
+
+```powershell
+python -m python_lsp_compare run-benchmark \
+  --server-command python \
+  --server-arg=-m \
+  --server-arg=pylsp \
+  --benchmark sqlalchemy \
+  --install-requirements \
+  --environment-mode isolated
+```
+
+When the server is launched with a Python executable, the runner swaps that executable for the suite's virtual environment interpreter. For non-Python launchers such as Node-based servers, the runner still isolates `PATH`, `VIRTUAL_ENV`, and related Python environment variables for the server process.
 
 ## Tests
 

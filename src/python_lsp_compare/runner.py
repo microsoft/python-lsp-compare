@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import statistics
-import subprocess
 import sys
 import tempfile
 import time
@@ -10,6 +9,7 @@ from pathlib import Path
 from typing import Sequence
 
 from .benchmark_suites import BenchmarkPoint, BenchmarkSuite, discover_benchmark_suites
+from .environments import prepare_benchmark_environment
 from .lsp_client import LspClient
 from .metrics import BenchmarkPointReport, BenchmarkSuiteReport, CallMetric, RunReport, ScenarioReport
 from .scenarios.base import SAMPLE_SOURCE, ScenarioContext
@@ -50,6 +50,8 @@ def run_benchmarks(
     benchmark_root: Path | None = None,
     install_requirements: bool = False,
     python_executable: str | None = None,
+    environment_mode: str = "current",
+    environment_root: Path | None = None,
 ) -> RunReport:
     suites = discover_benchmark_suites(benchmark_root)
     selected_names = list(benchmark_names or suites.keys())
@@ -65,6 +67,8 @@ def run_benchmarks(
             timeout_seconds=timeout_seconds,
             install_requirements=install_requirements,
             python_executable=python_executable or sys.executable,
+            environment_mode=environment_mode,
+            environment_root=environment_root,
         )
         for name in selected_names
     ]
@@ -133,12 +137,25 @@ def _run_single_benchmark_suite(
     timeout_seconds: float,
     install_requirements: bool,
     python_executable: str,
+    environment_mode: str,
+    environment_root: Path | None,
 ) -> BenchmarkSuiteReport:
     started_perf = time.perf_counter()
-    if install_requirements:
-        _install_suite_requirements(suite, python_executable)
+    benchmark_environment = prepare_benchmark_environment(
+        suite=suite,
+        command=command,
+        environment_mode=environment_mode,
+        base_python_executable=python_executable,
+        install_requirements=install_requirements,
+        environment_root=environment_root,
+    )
 
-    client = LspClient(command, timeout_seconds=timeout_seconds)
+    client = LspClient(
+        benchmark_environment.launch_command,
+        timeout_seconds=timeout_seconds,
+        cwd=suite.root_path,
+        env=benchmark_environment.process_env,
+    )
     client.start()
     error_message: str | None = None
     point_reports: list[BenchmarkPointReport] = []
@@ -180,6 +197,9 @@ def _run_single_benchmark_suite(
         workspace_dir=str(suite.workspace_dir),
         requirements_file=None if suite.requirements_file is None else str(suite.requirements_file),
         install_packages=suite.install_packages,
+        environment_mode=benchmark_environment.mode,
+        environment_path=None if benchmark_environment.root_path is None else str(benchmark_environment.root_path),
+        python_executable=benchmark_environment.python_executable,
         success=success,
         total_duration_ms=(time.perf_counter() - started_perf) * 1000,
         points=point_reports,
@@ -269,18 +289,6 @@ def _open_benchmark_documents(client: LspClient, suite: BenchmarkSuite) -> list[
             client.did_open(uri, point.file_path.read_text(encoding="utf-8"), context={"suite": suite.name, "phase": "setup"})
             opened.append(uri)
     return opened
-
-
-def _install_suite_requirements(suite: BenchmarkSuite, python_executable: str) -> None:
-    commands: list[list[str]] = []
-    if suite.requirements_file is not None and suite.requirements_file.exists():
-        commands.append([python_executable, "-m", "pip", "install", "-r", str(suite.requirements_file)])
-    if suite.install_packages:
-        commands.append([python_executable, "-m", "pip", "install", *suite.install_packages])
-    for command in commands:
-        completed = subprocess.run(command, capture_output=True, text=True, check=False)
-        if completed.returncode != 0:
-            raise RuntimeError(completed.stderr.strip() or completed.stdout.strip() or f"pip install failed for {suite.name}")
 
 
 def _summarize_benchmark_suite(points: Sequence[BenchmarkPointReport], metrics: Sequence[CallMetric]) -> dict[str, object]:

@@ -1,8 +1,16 @@
 from __future__ import annotations
 
+import argparse
 import json
+import os
 import sys
 from typing import Any
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("--write-env")
+    return parser.parse_args()
 
 
 def read_message() -> dict[str, Any] | None:
@@ -110,6 +118,18 @@ def handle_request(message: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def main() -> int:
+    args = parse_args()
+    if args.write_env:
+        with open(args.write_env, "w", encoding="utf-8") as handle:
+            json.dump(
+                {
+                    "sys_executable": sys.executable,
+                    "virtual_env": os.environ.get("VIRTUAL_ENV"),
+                    "path": os.environ.get("PATH", ""),
+                },
+                handle,
+                indent=2,
+            )
     while True:
         message = read_message()
         if message is None:
