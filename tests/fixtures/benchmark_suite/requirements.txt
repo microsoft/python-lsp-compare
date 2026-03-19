@@ -1,0 +1,1 @@
+# No third-party dependencies are required for the benchmark suite test fixture.

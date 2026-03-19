@@ -1,0 +1,32 @@
+{
+  "name": "web",
+  "description": "Benchmark Flask and Requests oriented web application code.",
+  "workspace_dir": "src",
+  "requirements_file": "requirements.txt",
+  "iterations": 5,
+  "warmup_iterations": 1,
+  "completion_points": [
+    {
+      "label": "request args completion",
+      "file": "src/app.py",
+      "line": 9,
+      "character": 18
+    }
+  ],
+  "hover_points": [
+    {
+      "label": "flask route hover",
+      "file": "src/app.py",
+      "line": 6,
+      "character": 5
+    }
+  ],
+  "find_references_points": [
+    {
+      "label": "client references",
+      "file": "src/app.py",
+      "line": 11,
+      "character": 13
+    }
+  ]
+}

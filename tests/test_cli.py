@@ -39,6 +39,10 @@ class CliTests(unittest.TestCase):
             self.assertEqual(report["scenario_reports"][0]["name"], "hover")
             self.assertTrue(report["scenario_reports"][0]["success"])
 
+    def test_list_benchmarks(self) -> None:
+        exit_code = main(["list-benchmarks", "--benchmark-root", str(Path(__file__).parent / "fixtures")])
+        self.assertEqual(exit_code, 0)
+
 
 if __name__ == "__main__":
     unittest.main()

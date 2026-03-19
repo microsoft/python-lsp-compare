@@ -1,0 +1,32 @@
+{
+  "name": "sqlalchemy",
+  "description": "Benchmark import-heavy SQLAlchemy models and query helpers.",
+  "workspace_dir": "src",
+  "requirements_file": "requirements.txt",
+  "iterations": 5,
+  "warmup_iterations": 1,
+  "hover_points": [
+    {
+      "label": "sessionmaker hover",
+      "file": "src/models.py",
+      "line": 12,
+      "character": 27
+    }
+  ],
+  "completion_points": [
+    {
+      "label": "query completion",
+      "file": "src/models.py",
+      "line": 16,
+      "character": 22
+    }
+  ],
+  "goto_definition_points": [
+    {
+      "label": "mapped class definition",
+      "file": "src/models.py",
+      "line": 16,
+      "character": 16
+    }
+  ]
+}

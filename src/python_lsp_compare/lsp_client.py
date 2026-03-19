@@ -58,7 +58,14 @@ class LspClient:
     def exit(self) -> None:
         self.notify("exit", {})
 
-    def did_open(self, uri: str, text: str, language_id: str = "python", version: int = 1) -> None:
+    def did_open(
+        self,
+        uri: str,
+        text: str,
+        language_id: str = "python",
+        version: int = 1,
+        context: dict[str, Any] | None = None,
+    ) -> None:
         self.notify(
             "textDocument/didOpen",
             {
@@ -69,18 +76,20 @@ class LspClient:
                     "text": text,
                 }
             },
+            context=context,
         )
 
-    def did_close(self, uri: str) -> None:
-        self.notify("textDocument/didClose", {"textDocument": {"uri": uri}})
+    def did_close(self, uri: str, context: dict[str, Any] | None = None) -> None:
+        self.notify("textDocument/didClose", {"textDocument": {"uri": uri}}, context=context)
 
-    def hover(self, uri: str, line: int, character: int) -> Any:
+    def hover(self, uri: str, line: int, character: int, context: dict[str, Any] | None = None) -> Any:
         return self.request(
             "textDocument/hover",
             {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}},
+            context=context,
         )
 
-    def completion(self, uri: str, line: int, character: int) -> Any:
+    def completion(self, uri: str, line: int, character: int, context: dict[str, Any] | None = None) -> Any:
         return self.request(
             "textDocument/completion",
             {
@@ -88,12 +97,31 @@ class LspClient:
                 "position": {"line": line, "character": character},
                 "context": {"triggerKind": 1},
             },
+            context=context,
         )
 
-    def document_symbols(self, uri: str) -> Any:
-        return self.request("textDocument/documentSymbol", {"textDocument": {"uri": uri}})
+    def document_symbols(self, uri: str, context: dict[str, Any] | None = None) -> Any:
+        return self.request("textDocument/documentSymbol", {"textDocument": {"uri": uri}}, context=context)
 
-    def request(self, method: str, params: dict[str, Any]) -> Any:
+    def definition(self, uri: str, line: int, character: int, context: dict[str, Any] | None = None) -> Any:
+        return self.request(
+            "textDocument/definition",
+            {"textDocument": {"uri": uri}, "position": {"line": line, "character": character}},
+            context=context,
+        )
+
+    def references(self, uri: str, line: int, character: int, context: dict[str, Any] | None = None) -> Any:
+        return self.request(
+            "textDocument/references",
+            {
+                "textDocument": {"uri": uri},
+                "position": {"line": line, "character": character},
+                "context": {"includeDeclaration": True},
+            },
+            context=context,
+        )
+
+    def request(self, method: str, params: dict[str, Any], context: dict[str, Any] | None = None) -> Any:
         request_id = self._next_request_id
         self._next_request_id += 1
         started_at = time.time()
@@ -114,6 +142,7 @@ class LspClient:
                     bytes_received=response.raw_size,
                     request_id=request_id,
                     error=payload["error"],
+                    context=context,
                 )
             )
             raise RuntimeError(f"{method} failed: {payload['error']}")
@@ -128,11 +157,12 @@ class LspClient:
                 bytes_received=response.raw_size,
                 request_id=request_id,
                 result=payload.get("result"),
+                context=context,
             )
         )
         return payload.get("result")
 
-    def notify(self, method: str, params: dict[str, Any]) -> None:
+    def notify(self, method: str, params: dict[str, Any], context: dict[str, Any] | None = None) -> None:
         started_at = time.time()
         started_perf = time.perf_counter()
         bytes_sent = self._transport.send_notification(method, params)
@@ -146,5 +176,6 @@ class LspClient:
                 started_at_unix=started_at,
                 bytes_sent=bytes_sent,
                 bytes_received=0,
+                context=context,
             )
         )

@@ -80,6 +80,32 @@ def handle_request(message: dict[str, Any]) -> dict[str, Any] | None:
                 }
             ],
         }
+    if method == "textDocument/definition":
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "uri": message["params"]["textDocument"]["uri"],
+                "range": {
+                    "start": {"line": 0, "character": 0},
+                    "end": {"line": 0, "character": 7},
+                },
+            },
+        }
+    if method == "textDocument/references":
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": [
+                {
+                    "uri": message["params"]["textDocument"]["uri"],
+                    "range": {
+                        "start": {"line": 0, "character": 0},
+                        "end": {"line": 0, "character": 7},
+                    },
+                }
+            ],
+        }
     return {"jsonrpc": "2.0", "id": request_id, "result": None}
 
 

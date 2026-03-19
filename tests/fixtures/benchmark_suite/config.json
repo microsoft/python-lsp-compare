@@ -1,0 +1,48 @@
+{
+  "name": "fixture_suite",
+  "description": "Fixture benchmark suite used by tests.",
+  "workspace_dir": "src",
+  "requirements_file": "requirements.txt",
+  "iterations": 2,
+  "warmup_iterations": 1,
+  "hover_points": [
+    {
+      "label": "hover fixture",
+      "file": "src/app.py",
+      "line": 5,
+      "character": 12
+    }
+  ],
+  "completion_points": [
+    {
+      "label": "completion fixture",
+      "file": "src/app.py",
+      "line": 6,
+      "character": 7
+    }
+  ],
+  "document_symbol_points": [
+    {
+      "label": "symbols fixture",
+      "file": "src/app.py",
+      "line": 0,
+      "character": 0
+    }
+  ],
+  "goto_definition_points": [
+    {
+      "label": "definition fixture",
+      "file": "src/app.py",
+      "line": 6,
+      "character": 4
+    }
+  ],
+  "find_references_points": [
+    {
+      "label": "references fixture",
+      "file": "src/app.py",
+      "line": 6,
+      "character": 4
+    }
+  ]
+}

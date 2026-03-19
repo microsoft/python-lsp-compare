@@ -26,6 +26,7 @@ class CallMetric:
     error_code: int | None = None
     error_message: str | None = None
     result_preview: str | None = None
+    context: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -39,6 +40,7 @@ class ScenarioReport:
     total_duration_ms: float
     metrics: list[CallMetric] = field(default_factory=list)
     error_message: str | None = None
+    summary: dict[str, Any] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -47,6 +49,67 @@ class ScenarioReport:
             "success": self.success,
             "total_duration_ms": self.total_duration_ms,
             "error_message": self.error_message,
+            "summary": self.summary,
+            "metrics": [metric.to_dict() for metric in self.metrics],
+        }
+
+
+@dataclass(slots=True)
+class BenchmarkPointReport:
+    label: str
+    method: str
+    file_path: str
+    line: int
+    character: int
+    success: bool
+    warmup_iterations: int
+    measured_iterations: int
+    metrics: list[CallMetric] = field(default_factory=list)
+    summary: dict[str, Any] = field(default_factory=dict)
+    error_message: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "label": self.label,
+            "method": self.method,
+            "file_path": self.file_path,
+            "line": self.line,
+            "character": self.character,
+            "success": self.success,
+            "warmup_iterations": self.warmup_iterations,
+            "measured_iterations": self.measured_iterations,
+            "summary": self.summary,
+            "error_message": self.error_message,
+            "metrics": [metric.to_dict() for metric in self.metrics],
+        }
+
+
+@dataclass(slots=True)
+class BenchmarkSuiteReport:
+    name: str
+    description: str
+    workspace_dir: str
+    requirements_file: str | None
+    install_packages: list[str]
+    success: bool
+    total_duration_ms: float
+    points: list[BenchmarkPointReport] = field(default_factory=list)
+    metrics: list[CallMetric] = field(default_factory=list)
+    error_message: str | None = None
+    summary: dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "description": self.description,
+            "workspace_dir": self.workspace_dir,
+            "requirements_file": self.requirements_file,
+            "install_packages": self.install_packages,
+            "success": self.success,
+            "total_duration_ms": self.total_duration_ms,
+            "error_message": self.error_message,
+            "summary": self.summary,
+            "points": [point.to_dict() for point in self.points],
             "metrics": [metric.to_dict() for metric in self.metrics],
         }
 
@@ -57,15 +120,19 @@ class RunReport:
     requested_scenarios: list[str]
     started_at_unix: float
     finished_at_unix: float
-    scenario_reports: list[ScenarioReport]
+    requested_benchmarks: list[str] = field(default_factory=list)
+    scenario_reports: list[ScenarioReport] = field(default_factory=list)
+    benchmark_reports: list[BenchmarkSuiteReport] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "server_command": self.server_command,
             "requested_scenarios": self.requested_scenarios,
+            "requested_benchmarks": self.requested_benchmarks,
             "started_at_unix": self.started_at_unix,
             "finished_at_unix": self.finished_at_unix,
             "scenario_reports": [report.to_dict() for report in self.scenario_reports],
+            "benchmark_reports": [report.to_dict() for report in self.benchmark_reports],
         }
 
 
@@ -81,6 +148,7 @@ def build_call_metric(
     request_id: int | str | None = None,
     error: dict[str, Any] | None = None,
     result: Any = None,
+    context: dict[str, Any] | None = None,
 ) -> CallMetric:
     return CallMetric(
         kind=kind,
@@ -94,4 +162,5 @@ def build_call_metric(
         error_code=None if error is None else error.get("code"),
         error_message=None if error is None else error.get("message"),
         result_preview=_truncate(result),
+        context=context or {},
     )
