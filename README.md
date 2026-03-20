@@ -67,6 +67,7 @@ List the locally configured servers:
 
 ```powershell
 python -m python_lsp_compare list-servers
+python -m python_lsp_compare list-servers --config path/to/lsp_servers.json
 ```
 
 Run one or more scenarios:
@@ -89,7 +90,7 @@ python -m python_lsp_compare run-benchmark \
   --output results/pyright-benchmarks.json
 ```
 
-Run the same scenarios across all locally configured servers:
+Run the same scenarios across all servers (downloads from GitHub releases by default):
 
 ```powershell
 python -m python_lsp_compare run-servers \
@@ -98,7 +99,17 @@ python -m python_lsp_compare run-servers \
   --output-dir results/servers
 ```
 
-Run benchmark suites across all locally configured servers:
+Run against servers from a local config file:
+
+```powershell
+python -m python_lsp_compare run-servers \
+  --config .python-lsp-compare/lsp_servers.json \
+  --scenario hover \
+  --scenario completion \
+  --output-dir results/servers
+```
+
+Run benchmark suites across all servers (downloads from GitHub releases by default):
 
 ```powershell
 python -m python_lsp_compare bench-servers \
@@ -125,8 +136,8 @@ Arguments:
 
 Configured server arguments:
 
-- `--config`: path to the local server config file. Defaults to `.python-lsp-compare/lsp_servers.json`.
-- `--server`: configured server id to run, repeatable. If omitted, all enabled servers run.
+- `--config`: path to a local server config JSON file. When omitted, servers are automatically downloaded from GitHub releases.
+- `--server`: server id to run, repeatable. If omitted, all servers run.
 - `--output-dir`: directory for per-server JSON reports and the summary JSON file.
 - `--summary-output`: optional path for the combined multi-server summary file.
 - `--markdown-output`: optional path for the combined markdown comparison report. If omitted, a markdown report is written next to the summary JSON.
@@ -169,7 +180,15 @@ The CSV comparison report flattens the same run into spreadsheet-friendly rows w
 
 ## Local Server Config
 
-Machine-specific server paths are kept out of the tracked repository by default.
+By default, `run-servers`, `bench-servers`, and `list-servers` automatically download the latest server binaries from GitHub releases. No config file is needed for this default mode.
+
+To use custom local builds instead, pass `--config` with a path to a server config JSON file:
+
+```powershell
+python -m python_lsp_compare bench-servers --config .python-lsp-compare/lsp_servers.json
+```
+
+You can create a config file by copying the example:
 
 - Copy `configs/lsp_servers.example.json` to `.python-lsp-compare/lsp_servers.json`.
 - Fill in the local executable paths for each server.
@@ -179,7 +198,30 @@ The local config is intentionally minimal: it identifies where each server execu
 
 ## Setting Up Servers
 
-`run-servers`, `bench-servers`, and `list-servers` all read from `.python-lsp-compare/lsp_servers.json` by default. The easiest way to get started is:
+By default, `run-servers`, `bench-servers`, and `list-servers` automatically download the latest releases of Pyright, Ty, and Pyrefly from GitHub. Just run:
+
+```powershell
+python -m python_lsp_compare bench-servers
+```
+
+The binaries are cached under `.python-lsp-compare/servers/` so subsequent runs skip the download. The only prerequisite for Pyright is that Node.js is installed and `node` is on your `PATH`.
+
+You can also pre-download servers explicitly:
+
+```powershell
+python -m python_lsp_compare download-servers
+python -m python_lsp_compare download-servers --server ty
+python -m python_lsp_compare download-servers --force
+```
+
+Download-servers arguments:
+
+- `--server`: download a specific server id (`pyright`, `ty`, `pyrefly`). Repeatable. Downloads all if omitted.
+- `--force`: re-download even if already cached.
+
+### Using a Config File
+
+If you prefer to use local builds or custom server paths, pass `--config` to point at a JSON config file:
 
 1. Copy `configs/lsp_servers.example.json` to `.python-lsp-compare/lsp_servers.json`.
 2. Replace each placeholder path with the local path to that server on your machine.
@@ -348,9 +390,9 @@ That means the example config is documentation, not a fixture that the test suit
 After editing the config, use these commands to verify everything is wired correctly:
 
 ```powershell
-python -m python_lsp_compare list-servers
-python -m python_lsp_compare run-servers --scenario hover
-python -m python_lsp_compare bench-servers --server pyright --server ty --server pyrefly
+python -m python_lsp_compare list-servers --config .python-lsp-compare/lsp_servers.json
+python -m python_lsp_compare run-servers --config .python-lsp-compare/lsp_servers.json --scenario hover
+python -m python_lsp_compare bench-servers --config .python-lsp-compare/lsp_servers.json
 ```
 
 If `list-servers` shows the expected ids and `run-servers` can complete a small scenario run, the same config is ready for `bench-servers`.
@@ -358,9 +400,9 @@ If `list-servers` shows the expected ids and `run-servers` can complete a small 
 On Linux or macOS, the same verification commands apply:
 
 ```bash
-python -m python_lsp_compare list-servers
-python -m python_lsp_compare run-servers --scenario hover
-python -m python_lsp_compare bench-servers --server pyright --server ty --server pyrefly
+python -m python_lsp_compare list-servers --config .python-lsp-compare/lsp_servers.json
+python -m python_lsp_compare run-servers --config .python-lsp-compare/lsp_servers.json --scenario hover
+python -m python_lsp_compare bench-servers --config .python-lsp-compare/lsp_servers.json
 ```
 
 ## Benchmark Suites

@@ -9,7 +9,8 @@ from .benchmark_suites import discover_benchmark_suites
 from .report_csv import write_csv_report
 from .report_markdown import write_markdown_report
 from .runner import BUILTIN_SCENARIOS, run_benchmarks, run_scenarios, write_report
-from .server_configs import default_local_server_config_path, load_server_config_file, load_server_configs, write_summary
+from .server_configs import load_server_config_file, load_server_configs, write_summary
+from .server_download import ALL_SERVER_SPECS, download_all_servers
 from .server_versions import describe_server_version
 
 
@@ -28,8 +29,8 @@ def build_parser() -> argparse.ArgumentParser:
     list_benchmarks_parser.add_argument("--benchmark-root", type=Path, help=argparse.SUPPRESS)
     list_benchmarks_parser.set_defaults(func=handle_list_benchmarks)
 
-    list_servers_parser = subparsers.add_parser("list-servers", help="List configured LSP servers from the local config file.")
-    list_servers_parser.add_argument("--config", type=Path, default=default_local_server_config_path(), help="Path to the local server config JSON.")
+    list_servers_parser = subparsers.add_parser("list-servers", help="List configured LSP servers. Downloads from GitHub releases by default, or reads from a config file if --config is given.")
+    list_servers_parser.add_argument("--config", type=Path, default=None, help="Path to a local server config JSON. When omitted, servers are downloaded from GitHub releases.")
     list_servers_parser.set_defaults(func=handle_list_servers)
 
     render_report_parser = subparsers.add_parser("render-report", help="Render a markdown comparison report from a multi-server summary JSON file.")
@@ -40,6 +41,11 @@ def build_parser() -> argparse.ArgumentParser:
     render_report_parser.add_argument("--title", help="Optional markdown title.")
     render_report_parser.set_defaults(func=handle_render_report)
 
+    download_parser = subparsers.add_parser("download-servers", help="Download LSP server binaries from GitHub releases.")
+    download_parser.add_argument("--server", action="append", default=[], help="Server id to download (pyright, ty, pyrefly). Repeatable. Downloads all if omitted.")
+    download_parser.add_argument("--force", action="store_true", help="Re-download even if already cached.")
+    download_parser.set_defaults(func=handle_download_servers)
+
     run_parser = subparsers.add_parser("run", help="Run scenarios against an LSP server.")
     run_parser.add_argument("--server-command", required=True, help="Executable to launch.")
     run_parser.add_argument("--server-arg", action="append", default=[], help="Additional executable argument. Repeatable.")
@@ -48,9 +54,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--output", type=Path, help="Write the JSON report to this path.")
     run_parser.set_defaults(func=handle_run)
 
-    run_servers_parser = subparsers.add_parser("run-servers", help="Run one or more configured LSP servers from the local config file.")
-    run_servers_parser.add_argument("--config", type=Path, default=default_local_server_config_path(), help="Path to the local server config JSON.")
-    run_servers_parser.add_argument("--server", action="append", default=[], help="Configured server id to run. Repeatable.")
+    run_servers_parser = subparsers.add_parser("run-servers", help="Run one or more LSP servers. Downloads from GitHub releases by default, or reads from a config file if --config is given.")
+    run_servers_parser.add_argument("--config", type=Path, default=None, help="Path to a local server config JSON. When omitted, servers are downloaded from GitHub releases.")
+    run_servers_parser.add_argument("--server", action="append", default=[], help="Server id to run. Repeatable.")
     run_servers_parser.add_argument("--scenario", action="append", default=[], help="Scenario to run. Repeatable.")
     run_servers_parser.add_argument("--timeout-seconds", type=float, help=f"Per-request timeout in seconds. Defaults to {DEFAULT_REQUEST_TIMEOUT_SECONDS:.0f}.")
     run_servers_parser.add_argument("--output-dir", type=Path, default=Path("results") / "servers", help="Directory for per-server JSON reports.")
@@ -60,9 +66,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_servers_parser.add_argument("--baseline-server", help="Configured server id or display name to use as the comparison baseline.")
     run_servers_parser.set_defaults(func=handle_run_servers)
 
-    bench_servers_parser = subparsers.add_parser("bench-servers", help="Run benchmark suites across one or more configured LSP servers from the local config file.")
-    bench_servers_parser.add_argument("--config", type=Path, default=default_local_server_config_path(), help="Path to the local server config JSON.")
-    bench_servers_parser.add_argument("--server", action="append", default=[], help="Configured server id to run. Repeatable.")
+    bench_servers_parser = subparsers.add_parser("bench-servers", help="Run benchmark suites across one or more LSP servers. Downloads from GitHub releases by default, or reads from a config file if --config is given.")
+    bench_servers_parser.add_argument("--config", type=Path, default=None, help="Path to a local server config JSON. When omitted, servers are downloaded from GitHub releases.")
+    bench_servers_parser.add_argument("--server", action="append", default=[], help="Server id to run. Repeatable.")
     bench_servers_parser.add_argument("--benchmark-root", type=Path, help=argparse.SUPPRESS)
     bench_servers_parser.add_argument("--timeout-seconds", type=float, default=DEFAULT_BENCHMARK_TIMEOUT_SECONDS, help=f"Per-request timeout in seconds. Defaults to {DEFAULT_BENCHMARK_TIMEOUT_SECONDS:.0f}.")
     bench_servers_parser.add_argument("--output-dir", type=Path, default=Path("results") / "bench-servers", help="Directory for per-server benchmark reports.")
@@ -98,11 +104,16 @@ def handle_list_benchmarks(args: argparse.Namespace) -> int:
 
 
 def handle_list_servers(args: argparse.Namespace) -> int:
-    config = load_server_config_file(args.config)
-    for server in config.servers:
-        status = "enabled" if server.enabled else "disabled"
-        baseline_text = ", baseline" if config.baseline_server == server.id or config.baseline_server == server.display_name else ""
-        print(f"{server.id}: {server.display_name} ({status}{baseline_text})")
+    if args.config is not None:
+        config = load_server_config_file(args.config)
+        for server in config.servers:
+            status = "enabled" if server.enabled else "disabled"
+            baseline_text = ", baseline" if config.baseline_server == server.id or config.baseline_server == server.display_name else ""
+            print(f"{server.id}: {server.display_name} ({status}{baseline_text})")
+    else:
+        servers = download_all_servers()
+        for server in servers:
+            print(f"{server.id}: {server.display_name} (enabled)")
     return 0
 
 
@@ -116,6 +127,29 @@ def handle_render_report(args: argparse.Namespace) -> int:
     print(f"Wrote markdown report to {output_path}")
     print(f"Wrote CSV report to {csv_path}")
     print(f"Wrote latest results to {latest_results_path}")
+    return 0
+
+
+def handle_download_servers(args: argparse.Namespace) -> int:
+    server_ids = args.server or None
+    known_ids = {s.id for s in ALL_SERVER_SPECS}
+    if server_ids:
+        unknown = set(server_ids) - known_ids
+        if unknown:
+            print(f"Unknown server ids: {', '.join(sorted(unknown))}")
+            print(f"Available: {', '.join(sorted(known_ids))}")
+            return 1
+
+    servers = download_all_servers(force=args.force, server_ids=server_ids)
+    if not servers:
+        print("No servers were downloaded successfully.")
+        return 1
+
+    print(f"\nDownloaded {len(servers)} server(s):")
+    for s in servers:
+        print(f"  {s.id}: {s.display_name}")
+        print(f"    command: {' '.join(s.launch_command)}")
+
     return 0
 
 
@@ -181,7 +215,7 @@ def handle_run_servers(args: argparse.Namespace) -> int:
     write_summary(
         summary_path,
         {
-            "config_path": str(args.config),
+            "config_path": str(args.config) if args.config else "github-releases",
             "requested_servers": sorted(requested_ids) if requested_ids else [server.id for server in configured_servers],
             "requested_scenarios": args.scenario,
             "baseline_server": baseline_server,
@@ -270,7 +304,7 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
     write_summary(
         summary_path,
         {
-            "config_path": str(args.config),
+            "config_path": str(args.config) if args.config else "github-releases",
             "requested_servers": sorted(requested_ids) if requested_ids else [server.id for server in configured_servers],
             "requested_benchmarks": requested_benchmarks,
             "baseline_server": baseline_server,
@@ -338,14 +372,17 @@ def _timestamp() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
 
 
-def _select_configured_servers(config_path: Path, requested_server_ids: list[str]) -> tuple[list, set[str]]:
-    configured_servers = [server for server in load_server_configs(config_path) if server.enabled]
+def _select_configured_servers(config_path: Path | None, requested_server_ids: list[str]) -> tuple[list, set[str]]:
+    if config_path is not None:
+        configured_servers = [server for server in load_server_configs(config_path) if server.enabled]
+    else:
+        configured_servers = download_all_servers(server_ids=requested_server_ids or None)
     requested_ids = set(requested_server_ids)
     if requested_ids:
         configured_servers = [server for server in configured_servers if server.id in requested_ids]
         missing = requested_ids.difference(server.id for server in configured_servers)
         if missing:
-            raise ValueError(f"Unknown configured servers: {', '.join(sorted(missing))}")
+            raise ValueError(f"Unknown servers: {', '.join(sorted(missing))}")
     return configured_servers, requested_ids
 
 
@@ -355,10 +392,12 @@ def _path_or_none(value: str | None) -> Path | None:
     return Path(value)
 
 
-def _resolve_baseline_server(config_path: Path, cli_value: str | None) -> str | None:
+def _resolve_baseline_server(config_path: Path | None, cli_value: str | None) -> str | None:
     if cli_value:
         return cli_value
-    return load_server_config_file(config_path).baseline_server
+    if config_path is not None:
+        return load_server_config_file(config_path).baseline_server
+    return "pyright"
 
 
 def _latest_results_path(summary_path: Path) -> Path:
