@@ -9,6 +9,20 @@ from .server_configs import ConfiguredServer
 
 def describe_server_version(server: ConfiguredServer) -> dict[str, Any]:
     source_path = None if server.source_path is None else Path(server.source_path)
+
+    # Use the version label from the download/install step if available.
+    # This avoids accidentally picking up the git commit from the python-lsp-compare
+    # repo when servers are cached inside it.
+    if server.version_label is not None:
+        return {
+            "kind": "release",
+            "label": server.version_label,
+            "repo_root": None,
+            "commit": None,
+            "short_commit": None,
+            "source_path": None if source_path is None else str(source_path),
+        }
+
     repo_root = _find_git_root(source_path)
     if repo_root is not None:
         commit = _run_command(["git", "-C", str(repo_root), "rev-parse", "HEAD"])

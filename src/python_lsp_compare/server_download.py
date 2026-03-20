@@ -268,8 +268,8 @@ def download_server(
     version: str | None = None,
     cache_dir: Path | None = None,
     force: bool = False,
-) -> Path:
-    """Download a server binary and return the path to the executable.
+) -> tuple[Path, str]:
+    """Download a server binary and return the path to the executable and version.
 
     Skips the download when the binary is already present in *cache_dir*
     unless *force* is set.
@@ -290,7 +290,7 @@ def download_server(
     cached = _find_executable(server_dir, spec.executable_name)
     if cached is not None and not force:
         print(f"  {spec.display_name} {version} already cached at {cached}")
-        return cached
+        return cached, version
 
     # Download
     asset_name = spec.asset_pattern[platform_key]
@@ -316,7 +316,7 @@ def download_server(
         exe_path.chmod(exe_path.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
 
     print(f"  Installed {spec.display_name} {version} -> {exe_path}")
-    return exe_path
+    return exe_path, version
 
 
 def install_pypi_server(
@@ -324,8 +324,8 @@ def install_pypi_server(
     *,
     cache_dir: Path | None = None,
     force: bool = False,
-) -> Path:
-    """Install PyPI packages into an isolated venv and return the executable path.
+) -> tuple[Path, str | None]:
+    """Install PyPI packages into an isolated venv and return the executable path and version.
 
     Re-uses an existing venv when the packages are already installed unless
     *force* is set.
@@ -340,7 +340,8 @@ def install_pypi_server(
 
     if exe_path.exists() and not force:
         print(f"  {spec.display_name} already installed at {exe_path}")
-        return exe_path
+        version = _get_pypi_package_version(spec, scripts_dir)
+        return exe_path, version
 
     # Create a fresh venv
     print(f"  Creating venv for {spec.display_name}...")
@@ -369,10 +370,33 @@ def install_pypi_server(
         )
 
     print(f"  Installed {spec.display_name} -> {exe_path}")
-    return exe_path
+    version = _get_pypi_package_version(spec, scripts_dir)
+    return exe_path, version
 
 
-def make_configured_server(spec: ServerSpec | PypiServerSpec, executable_path: Path) -> ConfiguredServer:
+def _get_pypi_package_version(spec: PypiServerSpec, scripts_dir: Path) -> str | None:
+    """Query the installed version of the first package in the spec's venv."""
+    pip_exe = str(scripts_dir / _exe("pip"))
+    for pkg in spec.packages:
+        try:
+            result = subprocess.run(
+                [pip_exe, "show", pkg],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=10,
+                check=True,
+            )
+            for line in result.stdout.splitlines():
+                if line.startswith("Version:"):
+                    return line.split(":", 1)[1].strip()
+        except (OSError, subprocess.SubprocessError):
+            continue
+    return None
+
+
+def make_configured_server(spec: ServerSpec | PypiServerSpec, executable_path: Path, version_label: str | None = None) -> ConfiguredServer:
     """Build a :class:`ConfiguredServer` from a *spec* and the on-disk *executable_path*."""
     exe_str = str(executable_path)
     if isinstance(spec, ServerSpec) and spec.kind == "node-wrapper":
@@ -391,6 +415,7 @@ def make_configured_server(spec: ServerSpec | PypiServerSpec, executable_path: P
         kind=spec.kind,
         notes=list(spec.notes),
         source_path=exe_str,
+        version_label=version_label,
     )
 
 
@@ -410,14 +435,14 @@ def download_all_servers(
     servers: list[ConfiguredServer] = []
     for spec in specs:
         try:
-            exe_path = download_server(spec, cache_dir=cache_dir, force=force)
-            servers.append(make_configured_server(spec, exe_path))
+            exe_path, version = download_server(spec, cache_dir=cache_dir, force=force)
+            servers.append(make_configured_server(spec, exe_path, version_label=version))
         except Exception as exc:
             print(f"  Warning: failed to download {spec.display_name}: {exc}")
     for spec in pypi_specs:
         try:
-            exe_path = install_pypi_server(spec, cache_dir=cache_dir, force=force)
-            servers.append(make_configured_server(spec, exe_path))
+            exe_path, version = install_pypi_server(spec, cache_dir=cache_dir, force=force)
+            servers.append(make_configured_server(spec, exe_path, version_label=version))
         except Exception as exc:
             print(f"  Warning: failed to install {spec.display_name}: {exc}")
     return servers

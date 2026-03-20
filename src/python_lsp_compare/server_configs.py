@@ -23,6 +23,7 @@ class ConfiguredServer:
     kind: str | None = None
     notes: list[str] = field(default_factory=list)
     source_path: str | None = None
+    version_label: str | None = None
 
     @property
     def launch_command(self) -> list[str]:

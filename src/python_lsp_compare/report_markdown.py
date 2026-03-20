@@ -63,7 +63,7 @@ def _render_benchmark_report(
     lines.append("")
     lines.append("## Overview")
     lines.append("")
-    lines.append("| Server | Success | Benchmarks | Total ms | Avg measured ms | Measured requests | Non-empty % | Failed points |")
+    lines.append("| Server | Success | Benchmarks | Wall clock ms | Avg measured ms | Measured requests | Non-empty % | Failed points |")
     lines.append("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |")
     overview_rows = []
     for server in servers:
@@ -90,6 +90,8 @@ def _render_benchmark_report(
                 **row,
             )
         )
+    lines.append("")
+    lines.append("*Wall clock ms includes server startup, warmup iterations, and shutdown — not just measured requests.*")
 
     suite_order = summary.get("requested_benchmarks") or _ordered_unique(
         report.get("name")
@@ -107,7 +109,7 @@ def _render_benchmark_report(
         lines.append("")
         lines.append(f"## Benchmark: {suite_name}")
         lines.append("")
-        lines.append("| Server | Success | Total ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |")
+        lines.append("| Server | Success | Wall clock ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |")
         lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |")
         suite_rows = []
         for server in suite_servers:
@@ -224,7 +226,7 @@ def _render_scenario_report(
     lines.append("")
     lines.append("## Overview")
     lines.append("")
-    lines.append("| Server | Success | Scenarios | Total ms | Avg request ms | Requests | Non-empty % |")
+    lines.append("| Server | Success | Scenarios | Wall clock ms | Avg request ms | Requests | Non-empty % |")
     lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: |")
     overview_rows = []
     for server in servers:
@@ -347,19 +349,32 @@ def _server_versions_lines(summary: dict[str, Any]) -> list[str]:
     servers = summary.get("servers")
     if not isinstance(servers, list) or not servers:
         return []
-    lines = ["## Server Versions", "", "| Server | Version | Commit | Source |", "| --- | --- | --- | --- |"]
+
+    # Check whether any server has commit information.
+    has_commits = False
+    for server in servers:
+        version = server.get("version") if isinstance(server, dict) else None
+        if isinstance(version, dict) and (version.get("short_commit") or version.get("commit")):
+            has_commits = True
+            break
+
+    if has_commits:
+        lines = ["## Server Versions", "", "| Server | Version | Commit | Source |", "| --- | --- | --- | --- |"]
+    else:
+        lines = ["## Server Versions", "", "| Server | Version | Source |", "| --- | --- | --- |"]
+
     for server in servers:
         version = server.get("version") if isinstance(server, dict) else None
         if not isinstance(version, dict):
             version = {}
-        lines.append(
-            "| {server} | {label} | {commit} | {source} |".format(
-                server=server.get("display_name", server.get("id", "server")),
-                label=_escape_table(str(version.get("label") or "unknown")),
-                commit=_escape_table(str(version.get("short_commit") or version.get("commit") or "n/a")),
-                source=_escape_table(str(version.get("source_path") or server.get("source_path") or "n/a")),
-            )
-        )
+        name = server.get("display_name", server.get("id", "server"))
+        label = _escape_table(str(version.get("label") or "unknown"))
+        source = _escape_table(str(version.get("source_path") or server.get("source_path") or "n/a"))
+        if has_commits:
+            commit = _escape_table(str(version.get("short_commit") or version.get("commit") or "n/a"))
+            lines.append(f"| {name} | {label} | {commit} | {source} |")
+        else:
+            lines.append(f"| {name} | {label} | {source} |")
     lines.append("")
     return lines
 
