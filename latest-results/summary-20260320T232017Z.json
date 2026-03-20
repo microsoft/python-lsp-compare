@@ -15,12 +15,12 @@
     "web"
   ],
   "baseline_server": "pyright",
-  "generated_at": "20260320T224325Z",
+  "generated_at": "20260320T232017Z",
   "servers": [
     {
       "id": "pyright",
       "display_name": "Pyright",
-      "output_path": "results/bench-servers/pyright-20260320T224325Z.json",
+      "output_path": "results/bench-servers/pyright-20260320T232017Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
@@ -30,11 +30,11 @@
       ],
       "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.408/package/dist/pyright-langserver.js",
       "version": {
-        "kind": "git",
-        "label": "a629d41c8a58",
-        "repo_root": "/home/runner/work/python-lsp-compare/python-lsp-compare",
-        "commit": "a629d41c8a58fa2fc9376f07fd611da5a38f4307",
-        "short_commit": "a629d41c8a58",
+        "kind": "release",
+        "label": "1.1.408",
+        "repo_root": null,
+        "commit": null,
+        "short_commit": null,
         "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.408/package/dist/pyright-langserver.js"
       },
       "requested_benchmarks": [
@@ -56,7 +56,7 @@
     {
       "id": "ty",
       "display_name": "Ty",
-      "output_path": "results/bench-servers/ty-20260320T224325Z.json",
+      "output_path": "results/bench-servers/ty-20260320T232017Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
@@ -65,11 +65,11 @@
       ],
       "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.24/ty-x86_64-unknown-linux-gnu/ty",
       "version": {
-        "kind": "git",
-        "label": "a629d41c8a58",
-        "repo_root": "/home/runner/work/python-lsp-compare/python-lsp-compare",
-        "commit": "a629d41c8a58fa2fc9376f07fd611da5a38f4307",
-        "short_commit": "a629d41c8a58",
+        "kind": "release",
+        "label": "0.0.24",
+        "repo_root": null,
+        "commit": null,
+        "short_commit": null,
         "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.24/ty-x86_64-unknown-linux-gnu/ty"
       },
       "requested_benchmarks": [
@@ -89,7 +89,7 @@
     {
       "id": "pyrefly",
       "display_name": "Pyrefly",
-      "output_path": "results/bench-servers/pyrefly-20260320T224325Z.json",
+      "output_path": "results/bench-servers/pyrefly-20260320T232017Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
@@ -101,11 +101,11 @@
       ],
       "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyrefly/0.57.1/pyrefly",
       "version": {
-        "kind": "git",
-        "label": "a629d41c8a58",
-        "repo_root": "/home/runner/work/python-lsp-compare/python-lsp-compare",
-        "commit": "a629d41c8a58fa2fc9376f07fd611da5a38f4307",
-        "short_commit": "a629d41c8a58",
+        "kind": "release",
+        "label": "0.57.1",
+        "repo_root": null,
+        "commit": null,
+        "short_commit": null,
         "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyrefly/0.57.1/pyrefly"
       },
       "requested_benchmarks": [
@@ -125,7 +125,7 @@
     {
       "id": "pylsp-mypy",
       "display_name": "pylsp-mypy",
-      "output_path": "results/bench-servers/pylsp-mypy-20260320T224325Z.json",
+      "output_path": "results/bench-servers/pylsp-mypy-20260320T232017Z.json",
       "success": false,
       "benchmark_count": 6,
       "command": [
@@ -133,11 +133,11 @@
       ],
       "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pylsp-mypy/venv/bin/pylsp",
       "version": {
-        "kind": "git",
-        "label": "a629d41c8a58",
-        "repo_root": "/home/runner/work/python-lsp-compare/python-lsp-compare",
-        "commit": "a629d41c8a58fa2fc9376f07fd611da5a38f4307",
-        "short_commit": "a629d41c8a58",
+        "kind": "release",
+        "label": "1.14.0",
+        "repo_root": null,
+        "commit": null,
+        "short_commit": null,
         "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pylsp-mypy/venv/bin/pylsp"
       },
       "requested_benchmarks": [
