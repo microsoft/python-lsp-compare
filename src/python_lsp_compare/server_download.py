@@ -6,6 +6,7 @@ import json
 import os
 import shutil
 import stat
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -37,6 +38,20 @@ class ServerSpec:
     kind: str  # "node-wrapper" or "native-exe"
     asset_pattern: dict[str, str]  # {platform_key: asset_name}
     executable_name: str  # Filename to search for after extraction
+    launch_args: list[str] = field(default_factory=list)
+    benchmark_args: list[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
+
+
+@dataclass(slots=True)
+class PypiServerSpec:
+    """Specification for a server installed from PyPI packages into an isolated venv."""
+
+    id: str
+    display_name: str
+    packages: list[str]  # e.g. ["python-lsp-server", "pylsp-mypy"]
+    executable_name: str  # Script name installed by the packages, e.g. "pylsp"
+    kind: str = "pypi-venv"
     launch_args: list[str] = field(default_factory=list)
     benchmark_args: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
@@ -125,7 +140,21 @@ PYREFLY_SPEC = ServerSpec(
     launch_args=["lsp", "--indexing-mode", "lazy-blocking", "--build-system-blocking"],
 )
 
+PYLSP_MYPY_SPEC = PypiServerSpec(
+    id="pylsp-mypy",
+    display_name="pylsp-mypy",
+    packages=["python-lsp-server", "pylsp-mypy"],
+    executable_name=_exe("pylsp"),
+    launch_args=[],
+    notes=[
+        "Uses python-lsp-server (pylsp) with the pylsp-mypy plugin.",
+        "LSP features like hover and completion are provided by pylsp/jedi, not mypy.",
+        "mypy contributes diagnostics only.",
+    ],
+)
+
 ALL_SERVER_SPECS: list[ServerSpec] = [PYRIGHT_SPEC, TY_SPEC, PYREFLY_SPEC]
+ALL_PYPI_SERVER_SPECS: list[PypiServerSpec] = [PYLSP_MYPY_SPEC]
 
 
 # ---------------------------------------------------------------------------
@@ -290,10 +319,63 @@ def download_server(
     return exe_path
 
 
-def make_configured_server(spec: ServerSpec, executable_path: Path) -> ConfiguredServer:
+def install_pypi_server(
+    spec: PypiServerSpec,
+    *,
+    cache_dir: Path | None = None,
+    force: bool = False,
+) -> Path:
+    """Install PyPI packages into an isolated venv and return the executable path.
+
+    Re-uses an existing venv when the packages are already installed unless
+    *force* is set.
+    """
+    if cache_dir is None:
+        cache_dir = _default_cache_dir()
+
+    server_dir = cache_dir / spec.id
+    venv_dir = server_dir / "venv"
+    scripts_dir = venv_dir / ("Scripts" if sys.platform == "win32" else "bin")
+    exe_path = scripts_dir / spec.executable_name
+
+    if exe_path.exists() and not force:
+        print(f"  {spec.display_name} already installed at {exe_path}")
+        return exe_path
+
+    # Create a fresh venv
+    print(f"  Creating venv for {spec.display_name}...")
+    if venv_dir.exists():
+        shutil.rmtree(venv_dir)
+    subprocess.run(
+        [sys.executable, "-m", "venv", str(venv_dir)],
+        check=True,
+        capture_output=True,
+    )
+
+    # Install packages
+    pip_exe = str(scripts_dir / _exe("pip"))
+    print(f"  Installing {', '.join(spec.packages)}...")
+    subprocess.run(
+        [pip_exe, "install", *spec.packages],
+        check=True,
+        capture_output=True,
+    )
+
+    if not exe_path.exists():
+        installed = sorted(str(p.name) for p in scripts_dir.iterdir() if p.is_file())[:30]
+        raise RuntimeError(
+            f"Expected to find {spec.executable_name} after installing {spec.packages} "
+            f"but it was not found.  Scripts dir contents: {installed}"
+        )
+
+    print(f"  Installed {spec.display_name} -> {exe_path}")
+    return exe_path
+
+
+def make_configured_server(spec: ServerSpec | PypiServerSpec, executable_path: Path) -> ConfiguredServer:
     """Build a :class:`ConfiguredServer` from a *spec* and the on-disk *executable_path*."""
     exe_str = str(executable_path)
-    if spec.kind == "node-wrapper":
+    if isinstance(spec, ServerSpec) and spec.kind == "node-wrapper":
         command = "node"
         args = [exe_str, *spec.launch_args]
     else:
@@ -322,7 +404,9 @@ def download_all_servers(
 
     When *server_ids* is ``None`` all known servers are downloaded.
     """
+    all_ids = {s.id for s in ALL_SERVER_SPECS} | {s.id for s in ALL_PYPI_SERVER_SPECS}
     specs = ALL_SERVER_SPECS if server_ids is None else [s for s in ALL_SERVER_SPECS if s.id in server_ids]
+    pypi_specs = ALL_PYPI_SERVER_SPECS if server_ids is None else [s for s in ALL_PYPI_SERVER_SPECS if s.id in server_ids]
     servers: list[ConfiguredServer] = []
     for spec in specs:
         try:
@@ -330,6 +414,12 @@ def download_all_servers(
             servers.append(make_configured_server(spec, exe_path))
         except Exception as exc:
             print(f"  Warning: failed to download {spec.display_name}: {exc}")
+    for spec in pypi_specs:
+        try:
+            exe_path = install_pypi_server(spec, cache_dir=cache_dir, force=force)
+            servers.append(make_configured_server(spec, exe_path))
+        except Exception as exc:
+            print(f"  Warning: failed to install {spec.display_name}: {exc}")
     return servers
 
 

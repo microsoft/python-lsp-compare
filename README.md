@@ -198,13 +198,13 @@ The local config is intentionally minimal: it identifies where each server execu
 
 ## Setting Up Servers
 
-By default, `run-servers`, `bench-servers`, and `list-servers` automatically download the latest releases of Pyright, Ty, and Pyrefly from GitHub. Just run:
+By default, `run-servers`, `bench-servers`, and `list-servers` automatically download the latest releases of Pyright, Ty, and Pyrefly from GitHub, and install pylsp-mypy from PyPI. Just run:
 
 ```powershell
 python -m python_lsp_compare bench-servers
 ```
 
-The binaries are cached under `.python-lsp-compare/servers/` so subsequent runs skip the download. The only prerequisite for Pyright is that Node.js is installed and `node` is on your `PATH`.
+GitHub release binaries are cached under `.python-lsp-compare/servers/` so subsequent runs skip the download. PyPI-based servers are installed into isolated venvs under the same cache directory. The only prerequisite for Pyright is that Node.js is installed and `node` is on your `PATH`.
 
 You can also pre-download servers explicitly:
 
@@ -216,7 +216,7 @@ python -m python_lsp_compare download-servers --force
 
 Download-servers arguments:
 
-- `--server`: download a specific server id (`pyright`, `ty`, `pyrefly`). Repeatable. Downloads all if omitted.
+- `--server`: download a specific server id (`pyright`, `ty`, `pyrefly`, `pylsp-mypy`). Repeatable. Downloads all if omitted.
 - `--force`: re-download even if already cached.
 
 ### Using a Config File
@@ -373,6 +373,18 @@ Pyrefly is also configured as a native executable. Point both `sourcePath` and `
 ```
 
 Those flags match the settings used in the benchmark runs documented in this repository.
+
+### pylsp-mypy
+
+pylsp-mypy is **not** a standalone type checker with its own LSP server. It is the [python-lsp-server](https://github.com/python-lsp/python-lsp-server) (pylsp) with the [pylsp-mypy](https://github.com/python-lsp/pylsp-mypy) plugin enabled. This means:
+
+- **Hover and completion** results come from pylsp's built-in [Jedi](https://github.com/davidhalter/jedi) provider, not from mypy.
+- **Diagnostics** (errors, warnings) are provided by mypy through the pylsp-mypy plugin.
+- Benchmark results for hover, completion, and document symbols reflect Jedi's performance through the pylsp layer, not mypy's type analysis.
+
+This server is included to show how a Jedi-based LSP endpoint compares in latency and result quality to purpose-built type-checker LSP servers.
+
+pylsp-mypy is installed automatically from PyPI into an isolated venv under `.python-lsp-compare/servers/pylsp-mypy/`.
 
 ## Test Configs
 

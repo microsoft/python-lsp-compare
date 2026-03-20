@@ -11,7 +11,7 @@ from .report_csv import write_csv_report
 from .report_markdown import render_markdown_report, write_markdown_report
 from .runner import BUILTIN_SCENARIOS, run_benchmarks, run_scenarios, write_report
 from .server_configs import load_server_config_file, load_server_configs, write_summary
-from .server_download import ALL_SERVER_SPECS, download_all_servers
+from .server_download import ALL_SERVER_SPECS, ALL_PYPI_SERVER_SPECS, download_all_servers
 from .server_versions import describe_server_version
 
 
@@ -134,7 +134,7 @@ def handle_render_report(args: argparse.Namespace) -> int:
 
 def handle_download_servers(args: argparse.Namespace) -> int:
     server_ids = args.server or None
-    known_ids = {s.id for s in ALL_SERVER_SPECS}
+    known_ids = {s.id for s in ALL_SERVER_SPECS} | {s.id for s in ALL_PYPI_SERVER_SPECS}
     if server_ids:
         unknown = set(server_ids) - known_ids
         if unknown:
@@ -215,6 +215,7 @@ def handle_run_servers(args: argparse.Namespace) -> int:
                 "version": version_info,
                 "requested_scenarios": requested_scenarios,
                 "timeout_seconds": timeout_seconds,
+                "notes": server.notes,
             }
         )
 
@@ -303,6 +304,7 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
                 "timeout_seconds": timeout_seconds,
                 "install_requirements": install_requirements,
                 "environment_mode": environment_mode,
+                "notes": server.notes,
             }
         )
 

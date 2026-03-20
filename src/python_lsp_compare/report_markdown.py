@@ -59,6 +59,7 @@ def _render_benchmark_report(
     lines.append("")
     lines.extend(_metadata_lines(summary_path, summary, baseline_server))
     lines.extend(_server_versions_lines(summary))
+    lines.extend(_server_notes_lines(summary))
     lines.append("")
     lines.append("## Overview")
     lines.append("")
@@ -219,6 +220,7 @@ def _render_scenario_report(
     lines.append("")
     lines.extend(_metadata_lines(summary_path, summary, baseline_server))
     lines.extend(_server_versions_lines(summary))
+    lines.extend(_server_notes_lines(summary))
     lines.append("")
     lines.append("## Overview")
     lines.append("")
@@ -358,6 +360,26 @@ def _server_versions_lines(summary: dict[str, Any]) -> list[str]:
                 source=_escape_table(str(version.get("source_path") or server.get("source_path") or "n/a")),
             )
         )
+    lines.append("")
+    return lines
+
+
+def _server_notes_lines(summary: dict[str, Any]) -> list[str]:
+    servers = summary.get("servers")
+    if not isinstance(servers, list) or not servers:
+        return []
+    notes_entries: list[tuple[str, list[str]]] = []
+    for server in servers:
+        notes = server.get("notes")
+        if isinstance(notes, list) and notes:
+            name = server.get("display_name", server.get("id", "server"))
+            notes_entries.append((name, notes))
+    if not notes_entries:
+        return []
+    lines = ["## Server Notes", ""]
+    for name, notes in notes_entries:
+        for note in notes:
+            lines.append(f"- **{name}**: {note}")
     lines.append("")
     return lines
 
