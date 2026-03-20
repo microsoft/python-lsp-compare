@@ -158,10 +158,12 @@ def handle_download_servers(args: argparse.Namespace) -> int:
 def handle_run(args: argparse.Namespace) -> int:
     command = [args.server_command, *args.server_arg]
     requested = args.scenario or list(BUILTIN_SCENARIOS.keys())
-    report = run_scenarios(command=command, scenario_names=requested, timeout_seconds=args.timeout_seconds)
     output_path = args.output or _default_output_path(command[0])
+    response_log_path = output_path.with_stem(output_path.stem + "-responses").with_suffix(".jsonl")
+    report = run_scenarios(command=command, scenario_names=requested, timeout_seconds=args.timeout_seconds, response_log_path=response_log_path)
     write_report(report, output_path)
     print(f"Wrote report to {output_path}")
+    print(f"Wrote response log to {response_log_path}")
     for scenario in report.scenario_reports:
         status = "ok" if scenario.success else "failed"
         print(f"{scenario.name}: {status} ({scenario.total_duration_ms:.2f} ms, {len(scenario.metrics)} calls)")
@@ -184,10 +186,12 @@ def handle_run_servers(args: argparse.Namespace) -> int:
         version_info = describe_server_version(server)
         requested_scenarios = args.scenario or list(BUILTIN_SCENARIOS.keys())
         timeout_seconds = args.timeout_seconds or DEFAULT_REQUEST_TIMEOUT_SECONDS
+        response_log_path = output_dir / f"{server.id}-{run_stamp}-responses.jsonl"
         report = run_scenarios(
             command=server.launch_command,
             scenario_names=requested_scenarios,
             timeout_seconds=timeout_seconds,
+            response_log_path=response_log_path,
         )
         output_path = output_dir / f"{server.id}-{run_stamp}.json"
         write_report(report, output_path)
@@ -271,6 +275,7 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
             environment_mode=environment_mode,
             environment_root=environment_root,
             progress=lambda message, server_id=server.id: print(f"{server_id}: {message}"),
+            response_log_path=output_dir / f"{server.id}-{run_stamp}-responses.jsonl",
         )
         requested_benchmarks = report.requested_benchmarks
         output_path = output_dir / f"{server.id}-{run_stamp}.json"
@@ -325,6 +330,8 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
 
 def handle_run_benchmark(args: argparse.Namespace) -> int:
     command = [args.server_command, *args.server_arg]
+    output_path = args.output or _default_output_path(f"{command[0]}-benchmarks")
+    response_log_path = output_path.with_stem(output_path.stem + "-responses").with_suffix(".jsonl")
     report = run_benchmarks(
         command=command,
         benchmark_names=None,
@@ -335,10 +342,11 @@ def handle_run_benchmark(args: argparse.Namespace) -> int:
         environment_mode="isolated",
         environment_root=None,
         progress=print,
+        response_log_path=response_log_path,
     )
-    output_path = args.output or _default_output_path(f"{command[0]}-benchmarks")
     write_report(report, output_path)
     print(f"Wrote report to {output_path}")
+    print(f"Wrote response log to {response_log_path}")
     for benchmark in report.benchmark_reports:
         status = "ok" if benchmark.success else "failed"
         print(f"{benchmark.name}: {status} ({benchmark.total_duration_ms:.2f} ms, {len(benchmark.points)} points, env={benchmark.environment_mode})")

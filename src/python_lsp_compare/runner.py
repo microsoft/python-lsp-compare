@@ -1,12 +1,13 @@
 from __future__ import annotations
 
+import io
 import json
 import statistics
 import sys
 import tempfile
 import time
 from pathlib import Path
-from typing import Callable, Sequence
+from typing import Any, Callable, Sequence
 
 from .benchmark_suites import BenchmarkPoint, BenchmarkSuite, BenchmarkValidation, discover_benchmark_suites
 from .environments import cleanup_benchmark_environment, prepare_benchmark_environment
@@ -20,6 +21,7 @@ def run_scenarios(
     command: Sequence[str],
     scenario_names: Sequence[str] | None = None,
     timeout_seconds: float = 10.0,
+    response_log_path: Path | None = None,
 ) -> RunReport:
     selected_names = list(scenario_names or BUILTIN_SCENARIOS.keys())
     unknown = [name for name in selected_names if name not in BUILTIN_SCENARIOS]
@@ -28,9 +30,14 @@ def run_scenarios(
 
     started_at = time.time()
     scenario_reports: list[ScenarioReport] = []
-    for name in selected_names:
-        scenario = BUILTIN_SCENARIOS[name]
-        scenario_reports.append(_run_single_scenario(command, scenario, timeout_seconds))
+    response_log = _open_response_log(response_log_path)
+    try:
+        for name in selected_names:
+            scenario = BUILTIN_SCENARIOS[name]
+            scenario_reports.append(_run_single_scenario(command, scenario, timeout_seconds, response_log=response_log))
+    finally:
+        if response_log is not None:
+            response_log.close()
 
     return RunReport(
         server_command=list(command),
@@ -53,6 +60,7 @@ def run_benchmarks(
     environment_mode: str = "current",
     environment_root: Path | None = None,
     progress: Callable[[str], None] | None = None,
+    response_log_path: Path | None = None,
 ) -> RunReport:
     suites = discover_benchmark_suites(benchmark_root)
     selected_names = list(benchmark_names or suites.keys())
@@ -62,19 +70,25 @@ def run_benchmarks(
 
     started_at = time.time()
     benchmark_reports: list[BenchmarkSuiteReport] = []
-    for name in selected_names:
-        benchmark_reports.append(
-            _run_single_benchmark_suite(
-                command=command,
-                suite=suites[name],
-                timeout_seconds=timeout_seconds,
-                install_requirements=install_requirements,
-                python_executable=python_executable or sys.executable,
-                environment_mode=environment_mode,
-                environment_root=environment_root,
-                progress=progress,
+    response_log = _open_response_log(response_log_path)
+    try:
+        for name in selected_names:
+            benchmark_reports.append(
+                _run_single_benchmark_suite(
+                    command=command,
+                    suite=suites[name],
+                    timeout_seconds=timeout_seconds,
+                    install_requirements=install_requirements,
+                    python_executable=python_executable or sys.executable,
+                    environment_mode=environment_mode,
+                    environment_root=environment_root,
+                    progress=progress,
+                    response_log=response_log,
+                )
             )
-        )
+    finally:
+        if response_log is not None:
+            response_log.close()
     return RunReport(
         server_command=list(command),
         requested_scenarios=[],
@@ -91,7 +105,7 @@ def write_report(report: RunReport, output_path: Path) -> None:
     output_path.write_text(json.dumps(report.to_dict(), indent=2), encoding="utf-8")
 
 
-def _run_single_scenario(command: Sequence[str], scenario, timeout_seconds: float) -> ScenarioReport:
+def _run_single_scenario(command: Sequence[str], scenario, timeout_seconds: float, response_log: io.TextIOBase | None = None) -> ScenarioReport:
     started_perf = time.perf_counter()
     with tempfile.TemporaryDirectory(prefix="python-lsp-compare-") as temp_dir:
         workspace_path = Path(temp_dir)
@@ -110,7 +124,9 @@ def _run_single_scenario(command: Sequence[str], scenario, timeout_seconds: floa
             client.initialize(workspace_path)
             client.initialized()
             client.did_change_configuration({})
+            before = len(client.metrics)
             scenario.run(client, context)
+            _write_scenario_responses(response_log, scenario.name, client.metrics[before:])
             client.shutdown()
             success = True
         except Exception as exc:
@@ -144,6 +160,7 @@ def _run_single_benchmark_suite(
     environment_mode: str,
     environment_root: Path | None,
     progress: Callable[[str], None] | None,
+    response_log: io.TextIOBase | None = None,
 ) -> BenchmarkSuiteReport:
     started_perf = time.perf_counter()
     _emit_progress(progress, f"[{suite.name}] preparing benchmark environment")
@@ -193,6 +210,7 @@ def _run_single_benchmark_suite(
                             method=method,
                             point=point,
                             progress=progress,
+                            response_log=response_log,
                         )
                     )
         finally:
@@ -243,6 +261,7 @@ def _run_benchmark_point(
     method: str,
     point: BenchmarkPoint,
     progress: Callable[[str], None] | None,
+    response_log: io.TextIOBase | None = None,
 ) -> BenchmarkPointReport:
     metrics: list[CallMetric] = []
     error_message: str | None = None
@@ -262,13 +281,15 @@ def _run_benchmark_point(
             "iteration": iteration + 1 if is_warmup else iteration - suite.warmup_iterations + 1,
         }
         try:
-            _dispatch_benchmark_request(client, method, uri, point.line, point.character, context)
+            result = _dispatch_benchmark_request(client, method, uri, point.line, point.character, context)
         except Exception as exc:
             success = False
             error_message = str(exc)
             _emit_progress(progress, f"[{suite.name}] {point.label} request failed: {error_message}")
             break
         metrics.extend(client.metrics[before:])
+        if response_log is not None and not is_warmup:
+            _write_response_entry(response_log, context, method, result)
 
     measured_metrics = [metric for metric in metrics if metric.context.get("phase") == "measured" and metric.kind == "request"]
     validation_summary = _validate_benchmark_point_results(method, point.validation, measured_metrics)
@@ -527,3 +548,53 @@ def _percentile(sorted_values: Sequence[float], percentile: float) -> float:
         return sorted_values[lower]
     remainder = index - lower
     return sorted_values[lower] * (1 - remainder) + sorted_values[upper] * remainder
+
+
+def _open_response_log(path: Path | None) -> io.TextIOBase | None:
+    if path is None:
+        return None
+    path.parent.mkdir(parents=True, exist_ok=True)
+    return open(path, "w", encoding="utf-8")  # noqa: SIM115
+
+
+def _write_response_entry(
+    log: io.TextIOBase,
+    context: dict[str, Any],
+    method: str,
+    result: Any,
+) -> None:
+    entry = {
+        "suite": context.get("suite"),
+        "label": context.get("label"),
+        "method": method,
+        "file_path": context.get("file_path"),
+        "line": context.get("line"),
+        "character": context.get("character"),
+        "iteration": context.get("iteration"),
+        "result": result,
+    }
+    log.write(json.dumps(entry, default=str) + "\n")
+
+
+def _write_scenario_responses(
+    log: io.TextIOBase | None,
+    scenario_name: str,
+    metrics: Sequence[CallMetric],
+) -> None:
+    """Write full response bodies for scenario requests.
+
+    Scenario metrics don't carry full results, but do have result_preview.
+    We write the preview as a lightweight record so the log is consistent.
+    """
+    if log is None:
+        return
+    for metric in metrics:
+        if metric.kind != "request" or not metric.success:
+            continue
+        entry = {
+            "scenario": scenario_name,
+            "method": metric.method,
+            "result_preview": metric.result_preview,
+            "result_summary": metric.result_summary,
+        }
+        log.write(json.dumps(entry, default=str) + "\n")
