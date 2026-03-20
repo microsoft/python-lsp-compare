@@ -2,6 +2,8 @@
 
 `python-lsp-compare` is a small benchmark and regression harness for Python Language Server Protocol implementations.
 
+This repository provides a vendor‑neutral test corpus and evaluation harness for comparing Python language server behavior. It does not define a specification.
+
 It focuses on four things:
 
 1. Running LSP servers over stdio with raw JSON-RPC messages.
