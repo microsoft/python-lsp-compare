@@ -13,6 +13,10 @@ from .server_configs import default_local_server_config_path, load_server_config
 from .server_versions import describe_server_version
 
 
+DEFAULT_REQUEST_TIMEOUT_SECONDS = 10.0
+DEFAULT_BENCHMARK_TIMEOUT_SECONDS = 300.0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="python -m python_lsp_compare")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -40,7 +44,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--server-command", required=True, help="Executable to launch.")
     run_parser.add_argument("--server-arg", action="append", default=[], help="Additional executable argument. Repeatable.")
     run_parser.add_argument("--scenario", action="append", default=[], help="Scenario to run. Repeatable.")
-    run_parser.add_argument("--timeout-seconds", type=float, default=10.0, help="Per-request timeout in seconds.")
+    run_parser.add_argument("--timeout-seconds", type=float, default=DEFAULT_REQUEST_TIMEOUT_SECONDS, help="Per-request timeout in seconds.")
     run_parser.add_argument("--output", type=Path, help="Write the JSON report to this path.")
     run_parser.set_defaults(func=handle_run)
 
@@ -48,7 +52,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_servers_parser.add_argument("--config", type=Path, default=default_local_server_config_path(), help="Path to the local server config JSON.")
     run_servers_parser.add_argument("--server", action="append", default=[], help="Configured server id to run. Repeatable.")
     run_servers_parser.add_argument("--scenario", action="append", default=[], help="Scenario to run. Repeatable.")
-    run_servers_parser.add_argument("--timeout-seconds", type=float, help="Per-request timeout in seconds.")
+    run_servers_parser.add_argument("--timeout-seconds", type=float, help=f"Per-request timeout in seconds. Defaults to {DEFAULT_REQUEST_TIMEOUT_SECONDS:.0f}.")
     run_servers_parser.add_argument("--output-dir", type=Path, default=Path("results") / "servers", help="Directory for per-server JSON reports.")
     run_servers_parser.add_argument("--summary-output", type=Path, help="Write a JSON summary for the full multi-server run.")
     run_servers_parser.add_argument("--markdown-output", type=Path, help="Write a markdown comparison report for the full multi-server run.")
@@ -60,7 +64,7 @@ def build_parser() -> argparse.ArgumentParser:
     bench_servers_parser.add_argument("--config", type=Path, default=default_local_server_config_path(), help="Path to the local server config JSON.")
     bench_servers_parser.add_argument("--server", action="append", default=[], help="Configured server id to run. Repeatable.")
     bench_servers_parser.add_argument("--benchmark-root", type=Path, help=argparse.SUPPRESS)
-    bench_servers_parser.add_argument("--timeout-seconds", type=float, help="Per-request timeout in seconds.")
+    bench_servers_parser.add_argument("--timeout-seconds", type=float, default=DEFAULT_BENCHMARK_TIMEOUT_SECONDS, help=f"Per-request timeout in seconds. Defaults to {DEFAULT_BENCHMARK_TIMEOUT_SECONDS:.0f}.")
     bench_servers_parser.add_argument("--output-dir", type=Path, default=Path("results") / "bench-servers", help="Directory for per-server benchmark reports.")
     bench_servers_parser.add_argument("--summary-output", type=Path, help="Write a JSON summary for the full multi-server benchmark run.")
     bench_servers_parser.add_argument("--markdown-output", type=Path, help="Write a markdown comparison report for the full multi-server benchmark run.")
@@ -72,7 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_benchmark_parser.add_argument("--server-command", required=True, help="Executable to launch.")
     run_benchmark_parser.add_argument("--server-arg", action="append", default=[], help="Additional executable argument. Repeatable.")
     run_benchmark_parser.add_argument("--benchmark-root", type=Path, help=argparse.SUPPRESS)
-    run_benchmark_parser.add_argument("--timeout-seconds", type=float, default=10.0, help="Per-request timeout in seconds.")
+    run_benchmark_parser.add_argument("--timeout-seconds", type=float, default=DEFAULT_BENCHMARK_TIMEOUT_SECONDS, help=f"Per-request timeout in seconds. Defaults to {DEFAULT_BENCHMARK_TIMEOUT_SECONDS:.0f}.")
     run_benchmark_parser.add_argument("--output", type=Path, help="Write the JSON report to this path.")
     run_benchmark_parser.set_defaults(func=handle_run_benchmark)
     return parser
@@ -143,7 +147,7 @@ def handle_run_servers(args: argparse.Namespace) -> int:
     for server in configured_servers:
         version_info = describe_server_version(server)
         requested_scenarios = args.scenario or list(BUILTIN_SCENARIOS.keys())
-        timeout_seconds = args.timeout_seconds or 10.0
+        timeout_seconds = args.timeout_seconds or DEFAULT_REQUEST_TIMEOUT_SECONDS
         report = run_scenarios(
             command=server.launch_command,
             scenario_names=requested_scenarios,
@@ -211,7 +215,7 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
     requested_benchmarks: list[str] | None = None
     for server in configured_servers:
         version_info = describe_server_version(server)
-        timeout_seconds = args.timeout_seconds or 10.0
+        timeout_seconds = args.timeout_seconds or DEFAULT_BENCHMARK_TIMEOUT_SECONDS
         benchmark_root = args.benchmark_root
         install_requirements = True
         environment_mode = "isolated"

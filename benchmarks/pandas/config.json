@@ -15,18 +15,18 @@
   ],
   "completion_points": [
     {
-      "label": "series completion",
+      "label": "report dataframe completion",
       "file": "src/report.py",
       "line": 17,
-      "character": 17
+      "character": 20
     }
   ],
-  "document_symbol_points": [
+  "goto_definition_points": [
     {
-      "label": "module symbols",
+      "label": "build report definition",
       "file": "src/report.py",
-      "line": 0,
-      "character": 0
+      "line": 16,
+      "character": 17
     }
   ]
 }

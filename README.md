@@ -120,7 +120,7 @@ Arguments:
 
 Configured server arguments:
 
-- `--config`: path to the local server config file. Defaults to `configs/local/lsp_servers.json`.
+- `--config`: path to the local server config file. Defaults to `.python-lsp-compare/lsp_servers.json`.
 - `--server`: configured server id to run, repeatable. If omitted, all enabled servers run.
 - `--output-dir`: directory for per-server JSON reports and the summary JSON file.
 - `--summary-output`: optional path for the combined multi-server summary file.
@@ -166,11 +166,204 @@ The CSV comparison report flattens the same run into spreadsheet-friendly rows w
 
 Machine-specific server paths are kept out of the tracked repository by default.
 
-- Copy `configs/lsp_servers.example.json` to `configs/local/lsp_servers.json`.
+- Copy `configs/lsp_servers.example.json` to `.python-lsp-compare/lsp_servers.json`.
 - Fill in the local executable paths for each server.
-- The `configs/local/` directory is ignored by Git.
+- The `.python-lsp-compare/` directory is ignored by Git.
 
 The local config is intentionally minimal: it identifies where each server executable or launcher lives on the current machine. Scenario selection, benchmark selection, benchmark environment creation, and package installation are handled by the runner so the same suite runs the same way for everyone.
+
+The loader still accepts the older `configs/local/lsp_servers.json` location as a fallback, but new setups should use `.python-lsp-compare/lsp_servers.json`.
+
+## Setting Up Servers
+
+`run-servers`, `bench-servers`, and `list-servers` all read from `.python-lsp-compare/lsp_servers.json` by default. The easiest way to get started is:
+
+1. Copy `configs/lsp_servers.example.json` to `.python-lsp-compare/lsp_servers.json`.
+2. Replace each placeholder path with the local path to that server on your machine.
+3. Keep only the servers you actually want to run, or set `"enabled": false` on entries you want to leave in the file but skip.
+4. Run `python -m python_lsp_compare list-servers` to confirm the config is valid and the servers are visible.
+
+Example config shape:
+
+```json
+{
+  "version": 1,
+  "baselineServer": "pylance",
+  "servers": [
+    {
+      "id": "pylance",
+      "displayName": "Pylance",
+      "enabled": true,
+      "sourcePath": "C:/path/to/pylance-server/dist/server.js",
+      "launch": {
+        "command": "C:/Program Files/nodejs/node.exe",
+        "args": [
+          "../../tools/pylance_stdio_launcher.cjs",
+          "--server-path",
+          "C:/path/to/pylance-server/dist/server.js"
+        ]
+      }
+    },
+    {
+      "id": "ty",
+      "displayName": "Ty",
+      "enabled": true,
+      "sourcePath": "C:/path/to/ty.exe",
+      "launch": {
+        "command": "C:/path/to/ty.exe",
+        "args": ["server"]
+      }
+    },
+    {
+      "id": "pyrefly",
+      "displayName": "Pyrefly",
+      "enabled": true,
+      "sourcePath": "C:/path/to/pyrefly.exe",
+      "launch": {
+        "command": "C:/path/to/pyrefly.exe",
+        "args": [
+          "lsp",
+          "--indexing-mode",
+          "lazy-blocking",
+          "--build-system-blocking"
+        ]
+      }
+    }
+  ]
+}
+```
+
+Linux/macOS example config shape:
+
+```json
+{
+  "version": 1,
+  "baselineServer": "pylance",
+  "servers": [
+    {
+      "id": "pylance",
+      "displayName": "Pylance",
+      "enabled": true,
+      "sourcePath": "/home/you/src/pylance-server/dist/server.js",
+      "launch": {
+        "command": "node",
+        "args": [
+          "../../tools/pylance_stdio_launcher.cjs",
+          "--server-path",
+          "/home/you/src/pylance-server/dist/server.js"
+        ]
+      }
+    },
+    {
+      "id": "ty",
+      "displayName": "Ty",
+      "enabled": true,
+      "sourcePath": "/home/you/bin/ty",
+      "launch": {
+        "command": "/home/you/bin/ty",
+        "args": ["server"]
+      }
+    },
+    {
+      "id": "pyrefly",
+      "displayName": "Pyrefly",
+      "enabled": true,
+      "sourcePath": "/home/you/bin/pyrefly",
+      "launch": {
+        "command": "/home/you/bin/pyrefly",
+        "args": [
+          "lsp",
+          "--indexing-mode",
+          "lazy-blocking",
+          "--build-system-blocking"
+        ]
+      }
+    }
+  ]
+}
+```
+
+Notes on the fields:
+
+- `id`: stable identifier used by `--server` and `--baseline-server`.
+- `displayName`: friendly label shown in reports.
+- `enabled`: optional; defaults to enabled if omitted.
+- `sourcePath`: optional but useful in generated reports so you can see which build or binary was measured.
+- `launch.command`: the actual executable to start.
+- `launch.args`: extra arguments passed to that executable. Relative paths inside `args` are resolved relative to the config file directory.
+- On Linux and macOS, `launch.command` may be either an absolute path such as `/home/you/bin/ty` or a command on `PATH` such as `node`.
+- `launch.benchmarkArgs`: optional advanced field for servers that need extra arguments only during `bench-servers`. Most setups should omit it.
+
+### Pylance
+
+Pylance is a Node-hosted server, so you need both:
+
+- a local `node.exe`
+- the built `server.js` for the Pylance server
+
+On Linux or macOS, replace `node.exe` with either `node` or the absolute path to your Node installation.
+
+This repo includes [tools/pylance_stdio_launcher.cjs](tools/pylance_stdio_launcher.cjs), which wraps the Node server so it behaves like a stdio LSP process for the benchmark harness. In the config:
+
+- `launch.command` should point to `node.exe`
+- `launch.args` should point to `../../tools/pylance_stdio_launcher.cjs`
+- `--server-path` should point to the actual Pylance `dist/server.js`
+
+### Ty
+
+Ty is configured as a native executable. Point both `sourcePath` and `launch.command` at the built `ty.exe`, and use:
+
+```json
+"args": ["server"]
+```
+
+because Ty exposes LSP mode through the `server` subcommand.
+
+### Pyrefly
+
+Pyrefly is also configured as a native executable. Point both `sourcePath` and `launch.command` at `pyrefly.exe`, and use:
+
+```json
+"args": [
+  "lsp",
+  "--indexing-mode",
+  "lazy-blocking",
+  "--build-system-blocking"
+]
+```
+
+Those flags match the settings used in the benchmark runs documented in this repository.
+
+## Test Configs
+
+The automated tests do not load your checked-in example config or your personal local config. The test suite builds temporary config JSON files inline inside the test cases and passes them with `--config`, which is why tests continue to pass even if the example file and your local file drift apart.
+
+In practice:
+
+- [tests/test_server_configs.py](tests/test_server_configs.py) creates temporary config files and verifies the loader and CLI behavior directly.
+- [tests/test_cli.py](tests/test_cli.py) and [tests/test_reporting.py](tests/test_reporting.py) also create temporary config files for isolated test runs.
+
+That means the example config is documentation, not a fixture that the test suite executes verbatim.
+
+### Verifying Setup
+
+After editing the config, use these commands to verify everything is wired correctly:
+
+```powershell
+python -m python_lsp_compare list-servers
+python -m python_lsp_compare run-servers --scenario hover
+python -m python_lsp_compare bench-servers --server pylance --server ty --server pyrefly
+```
+
+If `list-servers` shows the expected ids and `run-servers` can complete a small scenario run, the same config is ready for `bench-servers`.
+
+On Linux or macOS, the same verification commands apply:
+
+```bash
+python -m python_lsp_compare list-servers
+python -m python_lsp_compare run-servers --scenario hover
+python -m python_lsp_compare bench-servers --server pylance --server ty --server pyrefly
+```
 
 ## Benchmark Suites
 
@@ -233,8 +426,32 @@ When the server is launched with a Python executable, the runner swaps that exec
 
 ## Tests
 
-The repository includes unit tests with a fake stdio LSP server.
+The repository uses Python's built-in `unittest` runner and a fake stdio LSP server in `tests/fixtures/fake_lsp_server.py` to exercise the CLI, runner, reporting, configuration loading, and benchmark environment behavior without depending on a real language server during test runs.
+
+Run the full suite:
 
 ```powershell
 python -m unittest discover -s tests -v
 ```
+
+That command is the main test entry point for the repository. It currently runs all test modules under `tests/` and validates the following areas:
+
+- `tests/test_benchmarks.py`: benchmark suite discovery, benchmark execution, validation failures on empty results, suite-local virtual environment creation, temporary `pyrightconfig.json` generation, current-mode `python.pythonPath` handling, and `workspace/configuration` logging/round-trips.
+- `tests/test_cli.py`: basic CLI behavior for `list-scenarios`, `list-benchmarks`, `list-servers`, and `run`.
+- `tests/test_reporting.py`: markdown and CSV report generation, `latest-results.md` updates, report re-rendering from summary JSON, result-difference reporting, and markdown table sorting by fastest average time.
+- `tests/test_runner.py`: built-in scenario execution through the raw JSON-RPC runner and fast failure for unknown scenarios.
+- `tests/test_server_configs.py`: local server config loading, relative argument resolution, baseline selection, `run-servers`, and `bench-servers` behavior when using configured servers.
+
+Run an individual test module when you only need one area:
+
+```powershell
+python -m unittest tests.test_benchmarks -v
+python -m unittest tests.test_cli -v
+python -m unittest tests.test_reporting -v
+python -m unittest tests.test_runner -v
+python -m unittest tests.test_server_configs -v
+```
+
+The benchmark-oriented tests use the fixture suite in `tests/fixtures/benchmark_suite/`. Those tests intentionally create or reuse a suite-local `.venv` inside the fixture directory so they can verify the same isolated-environment behavior used by real benchmark runs.
+
+If you only changed markdown or CSV rendering, `tests.test_reporting` is usually the fastest targeted check. If you changed benchmark environment setup, suite discovery, or benchmark-point execution, start with `tests.test_benchmarks` and then run the full suite before finishing.

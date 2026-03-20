@@ -9,10 +9,15 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from python_lsp_compare.cli import main
-from python_lsp_compare.server_configs import load_server_config_file, load_server_configs
+from python_lsp_compare.server_configs import default_local_server_config_path, load_server_config_file, load_server_configs
 
 
 class ServerConfigTests(unittest.TestCase):
+    def test_default_local_server_config_path_points_to_gitignored_dotdir(self) -> None:
+        path = default_local_server_config_path()
+        self.assertEqual(path.name, "lsp_servers.json")
+        self.assertEqual(path.parent.name, ".python-lsp-compare")
+
     def test_load_server_configs_resolves_relative_args(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             config_dir = Path(temp_dir) / "configs"

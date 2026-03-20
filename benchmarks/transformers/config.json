@@ -15,18 +15,18 @@
   ],
   "completion_points": [
     {
-      "label": "tokenizer factory completion",
+      "label": "classifier pipeline completion",
       "file": "src/inference.py",
-      "line": 7,
-      "character": 30
+      "line": 15,
+      "character": 19
     }
   ],
   "goto_definition_points": [
     {
       "label": "auto tokenizer definition",
       "file": "src/inference.py",
-      "line": 7,
-      "character": 17
+      "line": 8,
+      "character": 20
     }
   ]
 }

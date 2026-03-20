@@ -1,5 +1,6 @@
 {
   "version": 1,
+  "baselineServer": "pylance",
   "servers": [
     {
       "id": "pylance",
@@ -16,7 +17,7 @@
         ]
       },
       "notes": [
-        "Copy this file to configs/local/lsp_servers.json and replace placeholder paths.",
+        "Copy this file to .python-lsp-compare/lsp_servers.json and replace placeholder paths.",
         "The launcher script path may stay relative to the config file."
       ]
     },
@@ -45,11 +46,15 @@
       "launch": {
         "command": "C:/path/to/pyrefly.exe",
         "args": [
-          "lsp"
-        ]
-          ]
+          "lsp",
+          "--indexing-mode",
+          "lazy-blocking",
           "--build-system-blocking"
         ]
+      },
+      "notes": [
+        "Pyrefly is typically launched with `lsp --indexing-mode lazy-blocking --build-system-blocking`.",
+        "If a server truly needs different arguments for benchmarks only, use launch.benchmarkArgs as an optional advanced field."
       ]
     }
   ]

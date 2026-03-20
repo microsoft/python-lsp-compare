@@ -43,20 +43,29 @@ def _render_benchmark_report(
     lines.append("")
     lines.append("| Server | Success | Benchmarks | Total ms | Avg measured ms | Measured requests | Non-empty % | Failed points |")
     lines.append("| --- | --- | --- | ---: | ---: | ---: | ---: | ---: |")
+    overview_rows = []
     for server in servers:
         benchmark_reports = server["report"].get("benchmark_reports", [])
         measured_metrics = [metric for report in benchmark_reports for point in report.get("points", []) for metric in _measured_request_metrics(point)]
         failed_points = sum(1 for report in benchmark_reports for point in report.get("points", []) if not point.get("summary", {}).get("validation", {}).get("passed", True))
+        avg_measured_ms = _mean_duration(measured_metrics)
+        overview_rows.append(
+            {
+                "server": server["display_name"],
+                "success": "yes" if server["success"] else "no",
+                "benchmarks": len(benchmark_reports),
+                "total_ms": _format_float(sum(report.get("total_duration_ms", 0.0) for report in benchmark_reports)),
+                "avg_measured_ms": _format_float(avg_measured_ms),
+                "request_count": len(measured_metrics),
+                "non_empty_rate": _format_percent(_non_empty_rate(measured_metrics)),
+                "failed_points": failed_points,
+                "sort_avg_ms": avg_measured_ms,
+            }
+        )
+    for row in _sort_rows_by_average(overview_rows, "sort_avg_ms"):
         lines.append(
             "| {server} | {success} | {benchmarks} | {total_ms} | {avg_measured_ms} | {request_count} | {non_empty_rate} | {failed_points} |".format(
-                server=server["display_name"],
-                success="yes" if server["success"] else "no",
-                benchmarks=len(benchmark_reports),
-                total_ms=_format_float(sum(report.get("total_duration_ms", 0.0) for report in benchmark_reports)),
-                avg_measured_ms=_format_float(_mean_duration(measured_metrics)),
-                request_count=len(measured_metrics),
-                non_empty_rate=_format_percent(_non_empty_rate(measured_metrics)),
-                failed_points=failed_points,
+                **row,
             )
         )
 
@@ -78,21 +87,28 @@ def _render_benchmark_report(
         lines.append("")
         lines.append("| Server | Success | Total ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |")
         lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |")
+        suite_rows = []
         for server in suite_servers:
             suite_report = server["suite_report"]
             measured_metrics = [metric for point in suite_report.get("points", []) for metric in _measured_request_metrics(point)]
             failed_points = sum(1 for point in suite_report.get("points", []) if not point.get("summary", {}).get("validation", {}).get("passed", True))
+            avg_measured_ms = _mean_duration(measured_metrics)
+            suite_rows.append(
+                {
+                    "server": server["display_name"],
+                    "success": "yes" if suite_report.get("success") else "no",
+                    "total_ms": _format_float(suite_report.get("total_duration_ms")),
+                    "avg_measured_ms": _format_float(avg_measured_ms),
+                    "points": len(suite_report.get("points", [])),
+                    "requests": len(measured_metrics),
+                    "non_empty_rate": _format_percent(_non_empty_rate(measured_metrics)),
+                    "failed_points": failed_points,
+                    "sort_avg_ms": avg_measured_ms,
+                }
+            )
+        for row in _sort_rows_by_average(suite_rows, "sort_avg_ms"):
             lines.append(
-                "| {server} | {success} | {total_ms} | {avg_measured_ms} | {points} | {requests} | {non_empty_rate} | {failed_points} |".format(
-                    server=server["display_name"],
-                    success="yes" if suite_report.get("success") else "no",
-                    total_ms=_format_float(suite_report.get("total_duration_ms")),
-                    avg_measured_ms=_format_float(_mean_duration(measured_metrics)),
-                    points=len(suite_report.get("points", [])),
-                    requests=len(measured_metrics),
-                    non_empty_rate=_format_percent(_non_empty_rate(measured_metrics)),
-                    failed_points=failed_points,
-                )
+                "| {server} | {success} | {total_ms} | {avg_measured_ms} | {points} | {requests} | {non_empty_rate} | {failed_points} |".format(**row)
             )
 
         point_order = _ordered_unique(
@@ -136,6 +152,7 @@ def _render_benchmark_report(
                         "result_value": _format_result_value(result_value),
                         "delta": _format_delta(result_value, baseline_value),
                         "validation": _validation_text(point),
+                        "sort_avg_ms": point.get("summary", {}).get("mean_ms"),
                     }
                 )
                 differing_values.append(_format_result_value(result_value))
@@ -149,7 +166,7 @@ def _render_benchmark_report(
             baseline_label = baseline_server["display_name"] if baseline_server is not None else point_rows[0]["server"]
             lines.append(f"| Server | Success | Mean ms | P95 ms | Non-empty % | {measure_label} | Delta vs {baseline_label} | Validation |")
             lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | --- |")
-            for row in point_rows:
+            for row in _sort_rows_by_average(point_rows, "sort_avg_ms"):
                 lines.append(
                     "| {server} | {success} | {mean_ms} | {p95_ms} | {non_empty_rate} | {result_value} | {delta} | {validation} |".format(**row)
                 )
@@ -183,19 +200,26 @@ def _render_scenario_report(
     lines.append("")
     lines.append("| Server | Success | Scenarios | Total ms | Avg request ms | Requests | Non-empty % |")
     lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: |")
+    overview_rows = []
     for server in servers:
         scenario_reports = server["report"].get("scenario_reports", [])
         request_metrics = [metric for report in scenario_reports for metric in _request_metrics(report.get("metrics", []))]
+        avg_request_ms = _mean_duration(request_metrics)
+        overview_rows.append(
+            {
+                "server": server["display_name"],
+                "success": "yes" if server["success"] else "no",
+                "scenarios": len(scenario_reports),
+                "total_ms": _format_float(sum(report.get("total_duration_ms", 0.0) for report in scenario_reports)),
+                "avg_request_ms": _format_float(avg_request_ms),
+                "requests": len(request_metrics),
+                "non_empty_rate": _format_percent(_non_empty_rate(request_metrics)),
+                "sort_avg_ms": avg_request_ms,
+            }
+        )
+    for row in _sort_rows_by_average(overview_rows, "sort_avg_ms"):
         lines.append(
-            "| {server} | {success} | {scenarios} | {total_ms} | {avg_request_ms} | {requests} | {non_empty_rate} |".format(
-                server=server["display_name"],
-                success="yes" if server["success"] else "no",
-                scenarios=len(scenario_reports),
-                total_ms=_format_float(sum(report.get("total_duration_ms", 0.0) for report in scenario_reports)),
-                avg_request_ms=_format_float(_mean_duration(request_metrics)),
-                requests=len(request_metrics),
-                non_empty_rate=_format_percent(_non_empty_rate(request_metrics)),
-            )
+            "| {server} | {success} | {scenarios} | {total_ms} | {avg_request_ms} | {requests} | {non_empty_rate} |".format(**row)
         )
 
     scenario_order = summary.get("requested_scenarios") or _ordered_unique(
@@ -219,6 +243,7 @@ def _render_scenario_report(
         else:
             lines.append(f"| Server | Success | Total ms | Avg request ms | Requests | Non-empty % | {measure_label} | Delta vs {baseline_label} |")
             lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |")
+        scenario_rows = []
         for server in servers:
             report = _find_by_name(server["report"].get("scenario_reports", []), scenario_name)
             if report is None:
@@ -228,29 +253,41 @@ def _render_scenario_report(
             metric_value = None if metric_key is None else _mean_numeric(request_metrics, metric_key)
             if baseline_value is None and baseline_server is None:
                 baseline_value = metric_value
+            avg_request_ms = _mean_duration(request_metrics)
+            if measure_label is None:
+                scenario_rows.append(
+                    {
+                        "server": server["display_name"],
+                        "success": "yes" if report.get("success") else "no",
+                        "total_ms": _format_float(report.get("total_duration_ms")),
+                        "avg_request_ms": _format_float(avg_request_ms),
+                        "requests": len(request_metrics),
+                        "non_empty_rate": _format_percent(_non_empty_rate(request_metrics)),
+                        "sort_avg_ms": avg_request_ms,
+                    }
+                )
+            else:
+                scenario_rows.append(
+                    {
+                        "server": server["display_name"],
+                        "success": "yes" if report.get("success") else "no",
+                        "total_ms": _format_float(report.get("total_duration_ms")),
+                        "avg_request_ms": _format_float(avg_request_ms),
+                        "requests": len(request_metrics),
+                        "non_empty_rate": _format_percent(_non_empty_rate(request_metrics)),
+                        "metric_value": _format_result_value(metric_value),
+                        "delta": _format_delta(metric_value, baseline_value),
+                        "sort_avg_ms": avg_request_ms,
+                    }
+                )
+        for row in _sort_rows_by_average(scenario_rows, "sort_avg_ms"):
             if measure_label is None:
                 lines.append(
-                    "| {server} | {success} | {total_ms} | {avg_request_ms} | {requests} | {non_empty_rate} |".format(
-                        server=server["display_name"],
-                        success="yes" if report.get("success") else "no",
-                        total_ms=_format_float(report.get("total_duration_ms")),
-                        avg_request_ms=_format_float(_mean_duration(request_metrics)),
-                        requests=len(request_metrics),
-                        non_empty_rate=_format_percent(_non_empty_rate(request_metrics)),
-                    )
+                    "| {server} | {success} | {total_ms} | {avg_request_ms} | {requests} | {non_empty_rate} |".format(**row)
                 )
             else:
                 lines.append(
-                    "| {server} | {success} | {total_ms} | {avg_request_ms} | {requests} | {non_empty_rate} | {metric_value} | {delta} |".format(
-                        server=server["display_name"],
-                        success="yes" if report.get("success") else "no",
-                        total_ms=_format_float(report.get("total_duration_ms")),
-                        avg_request_ms=_format_float(_mean_duration(request_metrics)),
-                        requests=len(request_metrics),
-                        non_empty_rate=_format_percent(_non_empty_rate(request_metrics)),
-                        metric_value=_format_result_value(metric_value),
-                        delta=_format_delta(metric_value, baseline_value),
-                    )
+                    "| {server} | {success} | {total_ms} | {avg_request_ms} | {requests} | {non_empty_rate} | {metric_value} | {delta} |".format(**row)
                 )
     return "\n".join(lines).rstrip() + "\n"
 
@@ -431,6 +468,16 @@ def _ordered_unique(values: Any) -> list[Any]:
         seen.add(value)
         ordered.append(value)
     return ordered
+
+
+def _sort_rows_by_average(rows: list[dict[str, Any]], key: str) -> list[dict[str, Any]]:
+    def sort_key(row: dict[str, Any]) -> tuple[float, str]:
+        value = row.get(key)
+        if isinstance(value, (int, float)):
+            return float(value), str(row.get("server", ""))
+        return float("inf"), str(row.get("server", ""))
+
+    return sorted(rows, key=sort_key)
 
 
 def _format_float(value: float | None) -> str:

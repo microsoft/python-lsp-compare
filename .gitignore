@@ -9,4 +9,5 @@ dist/
 *.egg-info/
 results/
 configs/local/
+.python-lsp-compare/
 

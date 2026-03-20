@@ -9,9 +9,107 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from python_lsp_compare.cli import main
+from python_lsp_compare.report_markdown import render_markdown_report
 
 
 class ReportingTests(unittest.TestCase):
+    def test_render_markdown_report_sorts_benchmark_tables_by_fastest_average(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            fast_report_path = temp_path / "fast.json"
+            slow_report_path = temp_path / "slow.json"
+            summary_path = temp_path / "summary.json"
+
+            def build_metric(duration_ms: float, completion_items: int, phase: str = "measured") -> dict[str, object]:
+                return {
+                    "kind": "request",
+                    "method": "textDocument/completion",
+                    "duration_ms": duration_ms,
+                    "result_summary": {
+                        "present": True,
+                        "empty": False,
+                        "completion_item_count": completion_items,
+                    },
+                    "context": {"phase": phase},
+                }
+
+            def build_report(total_duration_ms: float, mean_ms: float, measured_duration_ms: float, completion_items: int) -> dict[str, object]:
+                return {
+                    "benchmark_reports": [
+                        {
+                            "name": "fixture_suite",
+                            "success": True,
+                            "total_duration_ms": total_duration_ms,
+                            "points": [
+                                {
+                                    "label": "completion fixture",
+                                    "method": "textDocument/completion",
+                                    "file_path": "fixture.py",
+                                    "line": 1,
+                                    "character": 1,
+                                    "success": True,
+                                    "summary": {
+                                        "mean_ms": mean_ms,
+                                        "p95_ms": mean_ms,
+                                        "validation": {"passed": True, "failure_count": 0},
+                                    },
+                                    "metrics": [
+                                        build_metric(measured_duration_ms, completion_items),
+                                        build_metric(measured_duration_ms, completion_items),
+                                    ],
+                                }
+                            ],
+                        }
+                    ]
+                }
+
+            fast_report_path.write_text(
+                json.dumps(build_report(total_duration_ms=10.0, mean_ms=1.5, measured_duration_ms=1.0, completion_items=2)),
+                encoding="utf-8",
+            )
+            slow_report_path.write_text(
+                json.dumps(build_report(total_duration_ms=30.0, mean_ms=4.5, measured_duration_ms=5.0, completion_items=4)),
+                encoding="utf-8",
+            )
+            summary_path.write_text(
+                json.dumps(
+                    {
+                        "generated_at": "20260320T000000Z",
+                        "baseline_server": "slow",
+                        "requested_benchmarks": ["fixture_suite"],
+                        "servers": [
+                            {
+                                "id": "slow",
+                                "display_name": "Slow Server",
+                                "output_path": str(slow_report_path),
+                                "success": True,
+                            },
+                            {
+                                "id": "fast",
+                                "display_name": "Fast Server",
+                                "output_path": str(fast_report_path),
+                                "success": True,
+                            },
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            markdown = render_markdown_report(summary_path, baseline_server_id="slow")
+
+            overview_start = markdown.index("## Overview")
+            benchmark_start = markdown.index("## Benchmark: fixture_suite")
+            point_start = markdown.index("### completion fixture")
+
+            overview_section = markdown[overview_start:benchmark_start]
+            benchmark_section = markdown[benchmark_start:point_start]
+            point_section = markdown[point_start:]
+
+            self.assertLess(overview_section.index("| Fast Server |"), overview_section.index("| Slow Server |"))
+            self.assertLess(benchmark_section.index("| Fast Server |"), benchmark_section.index("| Slow Server |"))
+            self.assertLess(point_section.index("| Fast Server |"), point_section.index("| Slow Server |"))
+
     def test_bench_servers_writes_markdown_comparison_with_result_differences(self) -> None:
         server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
         benchmark_root = Path(__file__).parent / "fixtures"

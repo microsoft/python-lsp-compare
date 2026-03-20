@@ -21,12 +21,12 @@
       "character": 8
     }
   ],
-  "document_symbol_points": [
+  "goto_definition_points": [
     {
-      "label": "module symbols",
+      "label": "summarize definition",
       "file": "src/analysis.py",
-      "line": 0,
-      "character": 0
+      "line": 10,
+      "character": 15
     }
   ]
 }

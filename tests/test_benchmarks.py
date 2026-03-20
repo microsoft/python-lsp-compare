@@ -28,7 +28,7 @@ class BenchmarkSuiteTests(unittest.TestCase):
         self.assertIn("textDocument/definition", django_suite.points_by_method)
 
         pandas_suite = suites["pandas"]
-        self.assertIn("textDocument/documentSymbol", pandas_suite.points_by_method)
+        self.assertIn("textDocument/definition", pandas_suite.points_by_method)
 
         transformers_suite = suites["transformers"]
         self.assertIn("textDocument/hover", transformers_suite.points_by_method)
