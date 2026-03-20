@@ -9,4 +9,6 @@ dist/
 *.egg-info/
 results/
 .python-lsp-compare/
+debug_output*.txt
+debug_result*.txt
 

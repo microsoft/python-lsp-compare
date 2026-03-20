@@ -1,24 +1,23 @@
 {
   "version": 1,
-  "baselineServer": "pylance",
+  "baselineServer": "pyright",
   "servers": [
     {
-      "id": "pylance",
-      "displayName": "Pylance",
+      "id": "pyright",
+      "displayName": "Pyright",
       "enabled": true,
       "kind": "node-wrapper",
-      "sourcePath": "C:/path/to/pylance-server/dist/server.js",
+      "sourcePath": "C:/path/to/pyright/packages/pyright/langserver.index.js",
       "launch": {
         "command": "C:/Program Files/nodejs/node.exe",
         "args": [
-          "../tools/pylance_stdio_launcher.cjs",
-          "--server-path",
-          "C:/path/to/pylance-server/dist/server.js"
+          "C:/path/to/pyright/packages/pyright/langserver.index.js",
+          "--stdio"
         ]
       },
       "notes": [
         "Copy this file to .python-lsp-compare/lsp_servers.json and replace placeholder paths.",
-        "The launcher script path may stay relative to the config file."
+        "Pyright supports --stdio natively, no wrapper needed."
       ]
     },
     {

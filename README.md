@@ -44,7 +44,7 @@ python -m python_lsp_compare run --server-command pyright-langserver --server-ar
 python -m python_lsp_compare run-benchmark --server-command pyright-langserver --server-arg=--stdio
 python -m python_lsp_compare run-servers --scenario hover --scenario completion
 python -m python_lsp_compare bench-servers
-python -m python_lsp_compare render-report --summary results/bench-servers/summary-20260319T000000Z.json --baseline-server pylance
+python -m python_lsp_compare render-report --summary results/bench-servers/summary-20260319T000000Z.json --baseline-server pyright
 ```
 
 The default report path is created under `results/`.
@@ -102,7 +102,7 @@ Run benchmark suites across all locally configured servers:
 
 ```powershell
 python -m python_lsp_compare bench-servers \
-  --baseline-server pylance \
+  --baseline-server pyright \
   --output-dir results/bench-servers
 ```
 
@@ -111,7 +111,7 @@ Render or re-render a markdown comparison report from an existing multi-server s
 ```powershell
 python -m python_lsp_compare render-report \
   --summary results/bench-servers/summary-20260319T000000Z.json \
-  --baseline-server pylance \
+  --baseline-server pyright \
   --output results/bench-servers/comparison.md
 ```
 
@@ -191,19 +191,18 @@ Example config shape:
 ```json
 {
   "version": 1,
-  "baselineServer": "pylance",
+  "baselineServer": "pyright",
   "servers": [
     {
-      "id": "pylance",
-      "displayName": "Pylance",
+      "id": "pyright",
+      "displayName": "Pyright",
       "enabled": true,
-      "sourcePath": "C:/path/to/pylance-server/dist/server.js",
+      "sourcePath": "C:/path/to/pyright/packages/pyright/langserver.index.js",
       "launch": {
         "command": "C:/Program Files/nodejs/node.exe",
         "args": [
-          "../tools/pylance_stdio_launcher.cjs",
-          "--server-path",
-          "C:/path/to/pylance-server/dist/server.js"
+          "C:/path/to/pyright/packages/pyright/langserver.index.js",
+          "--stdio"
         ]
       }
     },
@@ -241,19 +240,18 @@ Linux/macOS example config shape:
 ```json
 {
   "version": 1,
-  "baselineServer": "pylance",
+  "baselineServer": "pyright",
   "servers": [
     {
-      "id": "pylance",
-      "displayName": "Pylance",
+      "id": "pyright",
+      "displayName": "Pyright",
       "enabled": true,
-      "sourcePath": "/home/you/src/pylance-server/dist/server.js",
+      "sourcePath": "/home/you/src/pyright/packages/pyright/langserver.index.js",
       "launch": {
         "command": "node",
         "args": [
-          "../tools/pylance_stdio_launcher.cjs",
-          "--server-path",
-          "/home/you/src/pylance-server/dist/server.js"
+          "/home/you/src/pyright/packages/pyright/langserver.index.js",
+          "--stdio"
         ]
       }
     },
@@ -297,20 +295,17 @@ Notes on the fields:
 - On Linux and macOS, `launch.command` may be either an absolute path such as `/home/you/bin/ty` or a command on `PATH` such as `node`.
 - `launch.benchmarkArgs`: optional advanced field for servers that need extra arguments only during `bench-servers`. Most setups should omit it.
 
-### Pylance
+### Pyright
 
-Pylance is a Node-hosted server, so you need both:
+Pyright is a Node-hosted server that supports `--stdio` natively. You need:
 
-- a local `node.exe`
-- the built `server.js` for the Pylance server
+- a local `node.exe` (or `node` on Linux/macOS)
+- the Pyright `langserver.index.js` entry point
 
-On Linux or macOS, replace `node.exe` with either `node` or the absolute path to your Node installation.
-
-This repo includes [tools/pylance_stdio_launcher.cjs](tools/pylance_stdio_launcher.cjs), which wraps the Node server so it behaves like a stdio LSP process for the benchmark harness. In the config:
+In the config:
 
 - `launch.command` should point to `node.exe`
-- `launch.args` should point to `../tools/pylance_stdio_launcher.cjs`
-- `--server-path` should point to the actual Pylance `dist/server.js`
+- `launch.args` should include the path to `langserver.index.js` followed by `--stdio`
 
 ### Ty
 
@@ -355,7 +350,7 @@ After editing the config, use these commands to verify everything is wired corre
 ```powershell
 python -m python_lsp_compare list-servers
 python -m python_lsp_compare run-servers --scenario hover
-python -m python_lsp_compare bench-servers --server pylance --server ty --server pyrefly
+python -m python_lsp_compare bench-servers --server pyright --server ty --server pyrefly
 ```
 
 If `list-servers` shows the expected ids and `run-servers` can complete a small scenario run, the same config is ready for `bench-servers`.
@@ -365,7 +360,7 @@ On Linux or macOS, the same verification commands apply:
 ```bash
 python -m python_lsp_compare list-servers
 python -m python_lsp_compare run-servers --scenario hover
-python -m python_lsp_compare bench-servers --server pylance --server ty --server pyrefly
+python -m python_lsp_compare bench-servers --server pyright --server ty --server pyrefly
 ```
 
 ## Benchmark Suites
@@ -425,7 +420,7 @@ python -m python_lsp_compare run-benchmark \
   --server-arg=pylsp
 ```
 
-When the server is launched with a Python executable, the runner swaps that executable for the suite's virtual environment interpreter. For non-Python launchers such as Node-based servers, the runner still isolates `PATH`, `VIRTUAL_ENV`, and related Python environment variables for the server process, writes a temporary `pyrightconfig.json` at the suite root, and serves workspace configuration requests so Pylance-style servers can resolve the suite interpreter consistently.
+When the server is launched with a Python executable, the runner swaps that executable for the suite's virtual environment interpreter. For non-Python launchers such as Node-based servers, the runner still isolates `PATH`, `VIRTUAL_ENV`, and related Python environment variables for the server process, writes a temporary `pyrightconfig.json` at the suite root, and serves workspace configuration requests so Pyright-style servers can resolve the suite interpreter consistently.
 
 ## Tests
 

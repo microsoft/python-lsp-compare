@@ -109,6 +109,7 @@ def _run_single_scenario(command: Sequence[str], scenario, timeout_seconds: floa
         try:
             client.initialize(workspace_path)
             client.initialized()
+            client.did_change_configuration({})
             scenario.run(client, context)
             client.shutdown()
             success = True
