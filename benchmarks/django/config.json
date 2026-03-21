@@ -28,5 +28,25 @@
       "line": 19,
       "character": 14
     }
+  ],
+  "edit_then_complete_points": [
+    {
+      "label": "edit queryset then complete",
+      "file": "src/blog.py",
+      "edit_line": 20,
+      "edit_text": "recent = Article.objects.order_by('-published').",
+      "query_line": 20,
+      "query_character": 48
+    }
+  ],
+  "edit_then_hover_points": [
+    {
+      "label": "edit queryset then hover",
+      "file": "src/blog.py",
+      "edit_line": 20,
+      "edit_text": "recent = Article.objects.order_by('-published')",
+      "query_line": 20,
+      "query_character": 30
+    }
   ]
 }

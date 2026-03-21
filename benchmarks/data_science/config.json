@@ -28,5 +28,25 @@
       "line": 10,
       "character": 15
     }
+  ],
+  "edit_then_complete_points": [
+    {
+      "label": "edit array then complete",
+      "file": "src/analysis.py",
+      "edit_line": 10,
+      "edit_text": "reshaped = np.array([4, 5, 6]).",
+      "query_line": 10,
+      "query_character": 31
+    }
+  ],
+  "edit_then_hover_points": [
+    {
+      "label": "edit array then hover",
+      "file": "src/analysis.py",
+      "edit_line": 10,
+      "edit_text": "reshaped = np.array([4, 5, 6])",
+      "query_line": 10,
+      "query_character": 15
+    }
   ]
 }

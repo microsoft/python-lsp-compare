@@ -28,5 +28,25 @@
       "line": 8,
       "character": 20
     }
+  ],
+  "edit_then_complete_points": [
+    {
+      "label": "edit prediction then complete",
+      "file": "src/inference.py",
+      "edit_line": 16,
+      "edit_text": "label = first_prediction.",
+      "query_line": 16,
+      "query_character": 25
+    }
+  ],
+  "edit_then_hover_points": [
+    {
+      "label": "edit tokenizer then hover",
+      "file": "src/inference.py",
+      "edit_line": 10,
+      "edit_text": "    vocab_size = tokenizer.vocab_size",
+      "query_line": 10,
+      "query_character": 30
+    }
   ]
 }

@@ -28,5 +28,25 @@
       "line": 16,
       "character": 17
     }
+  ],
+  "edit_then_complete_points": [
+    {
+      "label": "edit dataframe then complete",
+      "file": "src/report.py",
+      "edit_line": 17,
+      "edit_text": "subset = report.drop(columns=['team']).",
+      "query_line": 17,
+      "query_character": 39
+    }
+  ],
+  "edit_then_hover_points": [
+    {
+      "label": "edit dataframe then hover",
+      "file": "src/report.py",
+      "edit_line": 17,
+      "edit_text": "subset = report.drop(columns=['team'])",
+      "query_line": 17,
+      "query_character": 20
+    }
   ]
 }

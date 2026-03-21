@@ -28,5 +28,25 @@
       "line": 10,
       "character": 17
     }
+  ],
+  "edit_then_complete_points": [
+    {
+      "label": "edit response then complete",
+      "file": "src/app.py",
+      "edit_line": 11,
+      "edit_text": "    resp = client.get('https://example.invalid/data').",
+      "query_line": 11,
+      "query_character": 55
+    }
+  ],
+  "edit_then_hover_points": [
+    {
+      "label": "edit response then hover",
+      "file": "src/app.py",
+      "edit_line": 11,
+      "edit_text": "    resp = client.get('https://example.invalid/data')",
+      "query_line": 11,
+      "query_character": 20
+    }
   ]
 }

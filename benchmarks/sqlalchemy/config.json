@@ -28,5 +28,25 @@
       "line": 16,
       "character": 16
     }
+  ],
+  "edit_then_complete_points": [
+    {
+      "label": "edit query then complete",
+      "file": "src/models.py",
+      "edit_line": 18,
+      "edit_text": "first_user = session.scalars(select(User)).first().",
+      "query_line": 18,
+      "query_character": 51
+    }
+  ],
+  "edit_then_hover_points": [
+    {
+      "label": "edit session then hover",
+      "file": "src/models.py",
+      "edit_line": 18,
+      "edit_text": "first_user = session.scalars(select(User)).first()",
+      "query_line": 18,
+      "query_character": 24
+    }
   ]
 }
