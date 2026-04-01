@@ -77,6 +77,7 @@ def build_parser() -> argparse.ArgumentParser:
     bench_servers_parser.add_argument("--markdown-output", type=Path, help="Write a markdown comparison report for the full multi-server benchmark run.")
     bench_servers_parser.add_argument("--csv-output", type=Path, help="Write a CSV comparison report for the full multi-server benchmark run.")
     bench_servers_parser.add_argument("--baseline-server", help="Configured server id or display name to use as the comparison baseline.")
+    bench_servers_parser.add_argument("--fail-on-error", action="store_true", help="Exit with non-zero status if any server benchmark fails.")
     bench_servers_parser.set_defaults(func=handle_bench_servers)
 
     run_benchmark_parser = subparsers.add_parser("run-benchmark", help="Run config-driven benchmark suites against an LSP server.")
@@ -323,6 +324,9 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
     print(f"Wrote summary to {summary_path}")
     print(f"Wrote markdown report to {markdown_path}")
     print(f"Wrote CSV report to {csv_path}")
+    if args.fail_on_error and not all(s["success"] for s in server_summaries):
+        print("ERROR: One or more server benchmarks failed.")
+        return 1
     return 0
 
 
