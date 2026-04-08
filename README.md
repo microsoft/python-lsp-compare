@@ -90,7 +90,7 @@ python -m python_lsp_compare run-benchmark \
   --output results/pyright-benchmarks.json
 ```
 
-Run the same scenarios across all servers (downloads from GitHub releases by default):
+Run the same scenarios across all servers (using cached GitHub-release or PyPI installs by default):
 
 ```powershell
 python -m python_lsp_compare run-servers \
@@ -109,7 +109,7 @@ python -m python_lsp_compare run-servers \
   --output-dir results/servers
 ```
 
-Run benchmark suites across all servers (downloads from GitHub releases by default):
+Run benchmark suites across all servers (using cached GitHub-release or PyPI installs by default):
 
 ```powershell
 python -m python_lsp_compare bench-servers \
@@ -136,7 +136,7 @@ Arguments:
 
 Configured server arguments:
 
-- `--config`: path to a local server config JSON file. When omitted, servers are automatically downloaded from GitHub releases.
+- `--config`: path to a local server config JSON file. When omitted, servers are automatically acquired from cached GitHub releases or PyPI installs.
 - `--server`: server id to run, repeatable. If omitted, all servers run.
 - `--output-dir`: directory for per-server JSON reports and the summary JSON file.
 - `--summary-output`: optional path for the combined multi-server summary file.
@@ -180,7 +180,7 @@ The CSV comparison report flattens the same run into spreadsheet-friendly rows w
 
 ## Local Server Config
 
-By default, `run-servers`, `bench-servers`, and `list-servers` automatically download the latest server binaries from GitHub releases. No config file is needed for this default mode.
+By default, `run-servers`, `bench-servers`, and `list-servers` automatically fetch Pyright and Ty from GitHub releases, and install Pyrefly and pylsp-mypy into isolated virtual environments from PyPI. No config file is needed for this default mode.
 
 To use custom local builds instead, pass `--config` with a path to a server config JSON file:
 
@@ -198,13 +198,13 @@ The local config is intentionally minimal: it identifies where each server execu
 
 ## Setting Up Servers
 
-By default, `run-servers`, `bench-servers`, and `list-servers` automatically download the latest releases of Pyright, Ty, and Pyrefly from GitHub, and install pylsp-mypy from PyPI. Just run:
+By default, `run-servers`, `bench-servers`, and `list-servers` automatically download the latest releases of Pyright and Ty from GitHub, and install Pyrefly and pylsp-mypy from PyPI. Just run:
 
 ```powershell
 python -m python_lsp_compare bench-servers
 ```
 
-GitHub release binaries are cached under `.python-lsp-compare/servers/` so subsequent runs skip the download. PyPI-based servers are installed into isolated venvs under the same cache directory. The only prerequisite for Pyright is that Node.js is installed and `node` is on your `PATH`.
+GitHub release binaries are cached under `.python-lsp-compare/servers/` so subsequent runs skip the download. PyPI-based servers like Pyrefly and pylsp-mypy are installed into isolated venvs under the same cache directory. The only prerequisite for Pyright is that Node.js is installed and `node` is on your `PATH`.
 
 You can also pre-download servers explicitly:
 
@@ -361,7 +361,7 @@ because Ty exposes LSP mode through the `server` subcommand.
 
 ### Pyrefly
 
-Pyrefly is also configured as a native executable. Point both `sourcePath` and `launch.command` at `pyrefly.exe`, and use:
+Pyrefly is installed automatically from PyPI into an isolated venv under `.python-lsp-compare/servers/pyrefly/`. The cached executable is `pyrefly.exe` on Windows (or `pyrefly` on Linux/macOS), and it is launched with:
 
 ```json
 "args": [

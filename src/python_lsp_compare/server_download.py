@@ -1,4 +1,4 @@
-"""Download LSP server binaries from GitHub releases."""
+"""Acquire LSP server executables from GitHub releases or PyPI."""
 
 from __future__ import annotations
 
@@ -123,21 +123,15 @@ TY_SPEC = ServerSpec(
     launch_args=["server"],
 )
 
-PYREFLY_SPEC = ServerSpec(
+PYREFLY_SPEC = PypiServerSpec(
     id="pyrefly",
     display_name="Pyrefly",
-    repo="facebook/pyrefly",
-    kind="native-exe",
-    asset_pattern={
-        "windows-x86_64": "pyrefly-windows-x86_64.zip",
-        "windows-arm64": "pyrefly-windows-arm64.zip",
-        "linux-x86_64": "pyrefly-linux-x86_64.tar.gz",
-        "linux-arm64": "pyrefly-linux-arm64.tar.gz",
-        "macos-x86_64": "pyrefly-macos-x86_64.tar.gz",
-        "macos-arm64": "pyrefly-macos-arm64.tar.gz",
-    },
+    packages=["pyrefly"],
     executable_name=_exe("pyrefly"),
     launch_args=["lsp", "--indexing-mode", "lazy-blocking", "--build-system-blocking"],
+    notes=[
+        "Installed from PyPI into an isolated venv because GitHub release binaries are no longer published.",
+    ],
 )
 
 PYLSP_MYPY_SPEC = PypiServerSpec(
@@ -153,21 +147,55 @@ PYLSP_MYPY_SPEC = PypiServerSpec(
     ],
 )
 
-ALL_SERVER_SPECS: list[ServerSpec] = [PYRIGHT_SPEC, TY_SPEC, PYREFLY_SPEC]
-ALL_PYPI_SERVER_SPECS: list[PypiServerSpec] = [PYLSP_MYPY_SPEC]
+ALL_SERVER_SPECS: list[ServerSpec] = [PYRIGHT_SPEC, TY_SPEC]
+ALL_PYPI_SERVER_SPECS: list[PypiServerSpec] = [PYREFLY_SPEC, PYLSP_MYPY_SPEC]
 
 
 # ---------------------------------------------------------------------------
 # Download helpers
 # ---------------------------------------------------------------------------
 
-def get_latest_release_tag(repo: str) -> str:
-    """Query the GitHub API for the latest release tag of *repo*."""
-    url = f"{GITHUB_API_BASE}/repos/{repo}/releases/latest"
+def _github_json(url: str) -> object:
     req = urllib.request.Request(url, headers={"Accept": "application/vnd.github.v3+json"})
     with urllib.request.urlopen(req) as resp:  # noqa: S310 – URL is constructed from trusted constants
-        data = json.loads(resp.read())
-    return data["tag_name"]
+        return json.loads(resp.read())
+
+
+def get_latest_release_tag(repo: str, asset_name: str | None = None) -> str:
+    """Query the GitHub API for the latest usable release tag of *repo*."""
+    latest_url = f"{GITHUB_API_BASE}/repos/{repo}/releases/latest"
+    data = _github_json(latest_url)
+    if not isinstance(data, dict) or "tag_name" not in data:
+        raise RuntimeError(f"Unexpected GitHub release payload for {repo}: {data!r}")
+
+    latest_tag = data["tag_name"]
+    if asset_name is None:
+        return latest_tag
+
+    latest_assets = data.get("assets") or []
+    if any(isinstance(asset, dict) and asset.get("name") == asset_name for asset in latest_assets):
+        return latest_tag
+
+    releases_url = f"{GITHUB_API_BASE}/repos/{repo}/releases?per_page=10"
+    releases = _github_json(releases_url)
+    if isinstance(releases, list):
+        for release in releases:
+            if not isinstance(release, dict):
+                continue
+            if release.get("draft") or release.get("prerelease"):
+                continue
+            assets = release.get("assets") or []
+            if any(isinstance(asset, dict) and asset.get("name") == asset_name for asset in assets):
+                fallback_tag = release.get("tag_name")
+                if isinstance(fallback_tag, str):
+                    if fallback_tag != latest_tag:
+                        print(
+                            f"  Latest release {latest_tag} for {repo} does not contain {asset_name}; "
+                            f"falling back to {fallback_tag}"
+                        )
+                    return fallback_tag
+
+    return latest_tag
 
 
 def _versions_path(cache_dir: Path) -> Path:
@@ -187,7 +215,13 @@ def _save_versions(cache_dir: Path, data: dict) -> None:
     path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 
 
-def _resolve_version(spec: ServerSpec, cache_dir: Path, *, force: bool = False) -> str:
+def _resolve_version(
+    spec: ServerSpec,
+    cache_dir: Path,
+    *,
+    asset_name: str | None = None,
+    force: bool = False,
+) -> str:
     """Return the version to use, querying GitHub only if the cache is stale (>24h)."""
     versions = _load_versions(cache_dir)
     entry = versions.get(spec.id)
@@ -195,13 +229,19 @@ def _resolve_version(spec: ServerSpec, cache_dir: Path, *, force: bool = False) 
 
     if not force and entry is not None:
         checked_at = entry.get("checked_at", 0)
-        if now - checked_at < _VERSION_CHECK_INTERVAL_SECONDS:
-            version = entry["version"]
+        version = entry.get("version")
+        has_cached_binary = isinstance(version, str) and _find_executable(
+            cache_dir / spec.id / version,
+            spec.executable_name,
+        ) is not None
+        if now - checked_at < _VERSION_CHECK_INTERVAL_SECONDS and has_cached_binary:
             print(f"  {spec.display_name}: using cached version {version} (checked <24h ago)")
             return version
+        if now - checked_at < _VERSION_CHECK_INTERVAL_SECONDS and isinstance(version, str):
+            print(f"  {spec.display_name}: cached version {version} is incomplete; rechecking releases")
 
     print(f"Fetching latest release tag for {spec.repo}...")
-    version = get_latest_release_tag(spec.repo)
+    version = get_latest_release_tag(spec.repo, asset_name=asset_name)
     print(f"  Latest version: {version}")
 
     versions[spec.id] = {"version": version, "checked_at": now}
@@ -281,8 +321,10 @@ def download_server(
     if platform_key not in spec.asset_pattern:
         raise RuntimeError(f"No {spec.display_name} binary available for platform {platform_key}")
 
+    asset_name = spec.asset_pattern[platform_key]
+
     if version is None:
-        version = _resolve_version(spec, cache_dir, force=force)
+        version = _resolve_version(spec, cache_dir, asset_name=asset_name, force=force)
 
     server_dir = cache_dir / spec.id / version
 
@@ -293,7 +335,6 @@ def download_server(
         return cached, version
 
     # Download
-    asset_name = spec.asset_pattern[platform_key]
     download_url = f"https://github.com/{spec.repo}/releases/download/{version}/{asset_name}"
     print(f"  Downloading {asset_name}...")
 
