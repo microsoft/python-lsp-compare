@@ -1,0 +1,10 @@
+content:
+  - https://raw.githubusercontent.com/microsoft/ContributorLicenseAgreement/main/CLA.md
+
+minimalChangeRequired:
+  files: 1
+
+bypassUsers:
+  - python-lsp-compare-bot
+  - python-lsp-compare-bot[bot]
+  - github-actions[bot]
