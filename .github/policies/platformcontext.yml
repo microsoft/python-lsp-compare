@@ -1,8 +1,0 @@
-name: Platform Context
-description: Platform context for GitHub repositories
-resource: repository
-
-configuration:
-  platformContext:
-    platform: GitHub
-
