@@ -42,7 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
     render_report_parser.add_argument("--title", help="Optional markdown title.")
     render_report_parser.set_defaults(func=handle_render_report)
 
-    download_parser = subparsers.add_parser("download-servers", help="Download LSP server binaries from GitHub releases.")
+    download_parser = subparsers.add_parser("download-servers", help="Download or install LSP servers into the local cache.")
     download_parser.add_argument("--server", action="append", default=[], help="Server id to download (pyright, ty, pyrefly). Repeatable. Downloads all if omitted.")
     download_parser.add_argument("--force", action="store_true", help="Re-download even if already cached.")
     download_parser.set_defaults(func=handle_download_servers)
@@ -55,7 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--output", type=Path, help="Write the JSON report to this path.")
     run_parser.set_defaults(func=handle_run)
 
-    run_servers_parser = subparsers.add_parser("run-servers", help="Run one or more LSP servers. Downloads from GitHub releases by default, or reads from a config file if --config is given.")
+    run_servers_parser = subparsers.add_parser("run-servers", help="Run one or more LSP servers. Uses cached GitHub-release or PyPI installs by default, or reads from a config file if --config is given.")
     run_servers_parser.add_argument("--config", type=Path, default=None, help="Path to a local server config JSON. When omitted, servers are downloaded from GitHub releases.")
     run_servers_parser.add_argument("--server", action="append", default=[], help="Server id to run. Repeatable.")
     run_servers_parser.add_argument("--scenario", action="append", default=[], help="Scenario to run. Repeatable.")
@@ -67,7 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_servers_parser.add_argument("--baseline-server", help="Configured server id or display name to use as the comparison baseline.")
     run_servers_parser.set_defaults(func=handle_run_servers)
 
-    bench_servers_parser = subparsers.add_parser("bench-servers", help="Run benchmark suites across one or more LSP servers. Downloads from GitHub releases by default, or reads from a config file if --config is given.")
+    bench_servers_parser = subparsers.add_parser("bench-servers", help="Run benchmark suites across one or more LSP servers. Uses cached GitHub-release or PyPI installs by default, or reads from a config file if --config is given.")
     bench_servers_parser.add_argument("--config", type=Path, default=None, help="Path to a local server config JSON. When omitted, servers are downloaded from GitHub releases.")
     bench_servers_parser.add_argument("--server", action="append", default=[], help="Server id to run. Repeatable.")
     bench_servers_parser.add_argument("--benchmark-root", type=Path, help=argparse.SUPPRESS)

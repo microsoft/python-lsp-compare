@@ -1,4 +1,4 @@
-"""Download LSP server binaries from GitHub releases."""
+"""Acquire LSP server executables from GitHub releases or PyPI."""
 
 from __future__ import annotations
 
@@ -123,21 +123,15 @@ TY_SPEC = ServerSpec(
     launch_args=["server"],
 )
 
-PYREFLY_SPEC = ServerSpec(
+PYREFLY_SPEC = PypiServerSpec(
     id="pyrefly",
     display_name="Pyrefly",
-    repo="facebook/pyrefly",
-    kind="native-exe",
-    asset_pattern={
-        "windows-x86_64": "pyrefly-windows-x86_64.zip",
-        "windows-arm64": "pyrefly-windows-arm64.zip",
-        "linux-x86_64": "pyrefly-linux-x86_64.tar.gz",
-        "linux-arm64": "pyrefly-linux-arm64.tar.gz",
-        "macos-x86_64": "pyrefly-macos-x86_64.tar.gz",
-        "macos-arm64": "pyrefly-macos-arm64.tar.gz",
-    },
+    packages=["pyrefly"],
     executable_name=_exe("pyrefly"),
     launch_args=["lsp", "--indexing-mode", "lazy-blocking", "--build-system-blocking"],
+    notes=[
+        "Installed from PyPI into an isolated venv because GitHub release binaries are no longer published.",
+    ],
 )
 
 PYLSP_MYPY_SPEC = PypiServerSpec(
@@ -153,8 +147,8 @@ PYLSP_MYPY_SPEC = PypiServerSpec(
     ],
 )
 
-ALL_SERVER_SPECS: list[ServerSpec] = [PYRIGHT_SPEC, TY_SPEC, PYREFLY_SPEC]
-ALL_PYPI_SERVER_SPECS: list[PypiServerSpec] = [PYLSP_MYPY_SPEC]
+ALL_SERVER_SPECS: list[ServerSpec] = [PYRIGHT_SPEC, TY_SPEC]
+ALL_PYPI_SERVER_SPECS: list[PypiServerSpec] = [PYREFLY_SPEC, PYLSP_MYPY_SPEC]
 
 
 # ---------------------------------------------------------------------------
