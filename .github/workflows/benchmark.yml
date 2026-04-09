@@ -28,13 +28,6 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Generate GitHub App token
-        id: app-token
-        uses: tibdex/github-app-token@v2
-        with:
-          app_id: ${{ secrets.APP_ID }}
-          private_key: ${{ secrets.APP_PRIVATE_KEY }}          
-
       - name: Install package
         run: pip install -e .
 
@@ -44,7 +37,7 @@ jobs:
       - name: Create pull request for results
         uses: peter-evans/create-pull-request@v7
         with:
-          token: ${{ steps.app-token.outputs.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: Update benchmark results from workflow runner
           branch: automation/benchmark-results
           delete-branch: true
