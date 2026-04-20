@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from python_lsp_compare.cli import main
-from python_lsp_compare.server_configs import default_local_server_config_path, load_server_config_file, load_server_configs
+from python_lsp_compare.server_configs import ConfiguredServer, default_local_server_config_path, load_server_config_file, load_server_configs
 
 
 class ServerConfigTests(unittest.TestCase):
@@ -45,6 +45,23 @@ class ServerConfigTests(unittest.TestCase):
             servers = load_server_configs(config_path)
             self.assertEqual(len(servers), 1)
             self.assertEqual(servers[0].args[0], str(launcher.resolve()))
+
+    def test_configured_server_can_use_protocol_specific_launch_args(self) -> None:
+        server = ConfiguredServer(
+            id="pyrefly",
+            display_name="Pyrefly",
+            command="pyrefly",
+            args=["lsp", "--indexing-mode", "lazy-blocking", "--build-system-blocking"],
+            protocols=["lsp", "tsp"],
+            protocol_launch_args={
+                "tsp": ["tsp", "--indexing-mode", "lazy-blocking"],
+            },
+        )
+
+        self.assertEqual(
+            server.launch_command_for_protocol("tsp"),
+            ["pyrefly", "tsp", "--indexing-mode", "lazy-blocking"],
+        )
 
     def test_load_server_config_file_reads_baseline_server(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -200,6 +217,47 @@ class ServerConfigTests(unittest.TestCase):
             self.assertEqual(venv_path.name, ".venv")
             report_files = list(output_dir.glob("bench-server-*.json"))
             self.assertEqual(len(report_files), 1)
+
+    def test_filtered_bench_run_does_not_overwrite_latest_results_snapshot(self) -> None:
+        server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            config_path = temp_path / "servers.json"
+            output_dir = temp_path / "results" / "bench-servers"
+            benchmark_root = Path(__file__).parent / "fixtures"
+            latest_results = temp_path / "latest-results.md"
+            latest_results.write_text("keep existing results\n", encoding="utf-8")
+            config_path.write_text(
+                json.dumps(
+                    {
+                        "servers": [
+                            {
+                                "id": "bench-server",
+                                "displayName": "Bench Server",
+                                "launch": {
+                                    "command": sys.executable,
+                                    "args": [str(server_script)],
+                                },
+                            }
+                        ]
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            exit_code = main([
+                "bench-servers",
+                "--config",
+                str(config_path),
+                "--benchmark-root",
+                str(benchmark_root),
+                "--output-dir",
+                str(output_dir),
+                "--server",
+                "bench-server",
+            ])
+            self.assertEqual(exit_code, 0)
+            self.assertEqual(latest_results.read_text(encoding="utf-8"), "keep existing results\n")
 
     def test_bench_servers_uses_configured_baseline_when_cli_omits_it(self) -> None:
         server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"

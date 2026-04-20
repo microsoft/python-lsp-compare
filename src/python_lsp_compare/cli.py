@@ -28,6 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     list_benchmarks_parser = subparsers.add_parser("list-benchmarks", help="List config-driven benchmark suites.")
     list_benchmarks_parser.add_argument("--benchmark-root", type=Path, help=argparse.SUPPRESS)
+    list_benchmarks_parser.add_argument("--protocol", choices=["all", "lsp", "tsp"], default="all", help="Filter listed suites by protocol family.")
     list_benchmarks_parser.set_defaults(func=handle_list_benchmarks)
 
     list_servers_parser = subparsers.add_parser("list-servers", help="List configured LSP servers. Downloads from GitHub releases by default, or reads from a config file if --config is given.")
@@ -71,6 +72,7 @@ def build_parser() -> argparse.ArgumentParser:
     bench_servers_parser.add_argument("--config", type=Path, default=None, help="Path to a local server config JSON. When omitted, servers are downloaded from GitHub releases.")
     bench_servers_parser.add_argument("--server", action="append", default=[], help="Server id to run. Repeatable.")
     bench_servers_parser.add_argument("--benchmark-root", type=Path, help=argparse.SUPPRESS)
+    bench_servers_parser.add_argument("--protocol", choices=["all", "lsp", "tsp"], default="all", help="Run only benchmarks for the selected protocol family.")
     bench_servers_parser.add_argument("--timeout-seconds", type=float, default=DEFAULT_BENCHMARK_TIMEOUT_SECONDS, help=f"Per-request timeout in seconds. Defaults to {DEFAULT_BENCHMARK_TIMEOUT_SECONDS:.0f}.")
     bench_servers_parser.add_argument("--output-dir", type=Path, default=Path("results") / "bench-servers", help="Directory for per-server benchmark reports.")
     bench_servers_parser.add_argument("--summary-output", type=Path, help="Write a JSON summary for the full multi-server benchmark run.")
@@ -84,6 +86,7 @@ def build_parser() -> argparse.ArgumentParser:
     run_benchmark_parser.add_argument("--server-command", required=True, help="Executable to launch.")
     run_benchmark_parser.add_argument("--server-arg", action="append", default=[], help="Additional executable argument. Repeatable.")
     run_benchmark_parser.add_argument("--benchmark-root", type=Path, help=argparse.SUPPRESS)
+    run_benchmark_parser.add_argument("--protocol", choices=["all", "lsp", "tsp"], default="all", help="Run only benchmarks for the selected protocol family.")
     run_benchmark_parser.add_argument("--timeout-seconds", type=float, default=DEFAULT_BENCHMARK_TIMEOUT_SECONDS, help=f"Per-request timeout in seconds. Defaults to {DEFAULT_BENCHMARK_TIMEOUT_SECONDS:.0f}.")
     run_benchmark_parser.add_argument("--output", type=Path, help="Write the JSON report to this path.")
     run_benchmark_parser.set_defaults(func=handle_run_benchmark)
@@ -98,10 +101,13 @@ def handle_list_scenarios(_: argparse.Namespace) -> int:
 
 def handle_list_benchmarks(args: argparse.Namespace) -> int:
     suites = discover_benchmark_suites(args.benchmark_root)
+    allowed_protocols = _allowed_protocols(args.protocol)
     for suite in suites.values():
-        point_count = sum(len(points) for points in suite.points_by_method.values())
+        if allowed_protocols is not None and suite.protocol not in allowed_protocols:
+            continue
+        point_count = sum(len(points) for points in suite.points_by_method.values()) + len(suite.edit_points) + len(suite.tsp_points) + len(suite.tsp_edit_points)
         requirements = suite.requirements_file.name if suite.requirements_file is not None else "none"
-        print(f"{suite.name}: {suite.description} ({point_count} points, requirements={requirements})")
+        print(f"{suite.name}: {suite.description} ({point_count} points, requirements={requirements}, protocol={suite.protocol})")
     return 0
 
 
@@ -249,7 +255,7 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
     summary_path = args.summary_output or output_dir / f"summary-{run_stamp}.json"
 
     server_summaries: list[dict[str, object]] = []
-    requested_benchmarks: list[str] | None = None
+    requested_benchmarks: list[str] = []
     for server in configured_servers:
         print(f"=== Starting server: {server.id} ({server.display_name}) ===")
         print(f"  command: {server.command}")
@@ -264,8 +270,12 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
         environment_root = None
         python_executable = None
 
+        cli_protocols = _allowed_protocols(args.protocol)
+        server_protocols = set(server.protocols)
+        allowed_protocols = None if cli_protocols is None else [item for item in cli_protocols if item in server_protocols]
         report = run_benchmarks(
             command=server.benchmark_launch_command,
+            command_for_protocol=lambda protocol, configured_server=server: configured_server.benchmark_launch_command_for_protocol(protocol),
             benchmark_names=None,
             timeout_seconds=timeout_seconds,
             benchmark_root=benchmark_root,
@@ -275,8 +285,9 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
             environment_root=environment_root,
             progress=lambda message, server_id=server.id: print(f"{server_id}: {message}"),
             response_log_path=output_dir / f"{server.id}-{run_stamp}-responses.jsonl",
+            allowed_protocols=server.protocols if allowed_protocols is None else allowed_protocols,
         )
-        requested_benchmarks = report.requested_benchmarks
+        requested_benchmarks = _merge_requested_benchmarks(requested_benchmarks, report.requested_benchmarks)
         output_path = output_dir / f"{server.id}-{run_stamp}.json"
         write_report(report, output_path)
         success = all(item.success for item in report.benchmark_reports)
@@ -320,7 +331,10 @@ def handle_bench_servers(args: argparse.Namespace) -> int:
     csv_path = args.csv_output or summary_path.with_suffix(".csv")
     write_markdown_report(summary_path, markdown_path, baseline_server_id=baseline_server)
     write_csv_report(summary_path, csv_path, baseline_server_id=baseline_server)
-    _update_latest_results(output_dir, run_stamp, markdown_path, summary_path, baseline_server_id=baseline_server)
+    if _should_update_latest_results_for_bench_run(args):
+        _update_latest_results(output_dir, run_stamp, markdown_path, summary_path, baseline_server_id=baseline_server)
+    else:
+        print("Skipped updating latest-results because this was a filtered benchmark run.")
     print(f"Wrote summary to {summary_path}")
     print(f"Wrote markdown report to {markdown_path}")
     print(f"Wrote CSV report to {csv_path}")
@@ -345,6 +359,7 @@ def handle_run_benchmark(args: argparse.Namespace) -> int:
         environment_root=None,
         progress=print,
         response_log_path=response_log_path,
+        allowed_protocols=_allowed_protocols(args.protocol),
     )
     write_report(report, output_path)
     print(f"Wrote report to {output_path}")
@@ -400,12 +415,33 @@ def _path_or_none(value: str | None) -> Path | None:
     return Path(value)
 
 
+def _allowed_protocols(value: str | None) -> list[str] | None:
+    if value in {None, "all"}:
+        return None
+    return [value]
+
+
+def _merge_requested_benchmarks(existing: list[str], new_items: Sequence[str]) -> list[str]:
+    merged = list(existing)
+    seen = set(existing)
+    for item in new_items:
+        if item in seen:
+            continue
+        seen.add(item)
+        merged.append(item)
+    return merged
+
+
 def _resolve_baseline_server(config_path: Path | None, cli_value: str | None) -> str | None:
     if cli_value:
         return cli_value
     if config_path is not None:
         return load_server_config_file(config_path).baseline_server
     return "pyright"
+
+
+def _should_update_latest_results_for_bench_run(args: argparse.Namespace) -> bool:
+    return not bool(args.server) and getattr(args, "protocol", "all") in {None, "all"}
 
 
 def _latest_results_path(summary_path: Path) -> Path:

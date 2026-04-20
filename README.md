@@ -61,6 +61,7 @@ List the benchmark suites:
 
 ```powershell
 python -m python_lsp_compare list-benchmarks
+python -m python_lsp_compare list-benchmarks --protocol tsp
 ```
 
 List the locally configured servers:
@@ -88,6 +89,12 @@ python -m python_lsp_compare run-benchmark \
   --server-command pyright-langserver \
   --server-arg=--stdio \
   --output results/pyright-benchmarks.json
+
+python -m python_lsp_compare run-benchmark \
+  --server-command pyrefly \
+  --server-arg=lsp \
+  --protocol tsp \
+  --output results/pyrefly-tsp-benchmarks.json
 ```
 
 Run the same scenarios across all servers (using cached GitHub-release or PyPI installs by default):
@@ -146,6 +153,7 @@ Configured server arguments:
 
 Configured benchmark runner arguments:
 
+- `--protocol`: choose `lsp`, `tsp`, or `all` to filter which benchmark family runs.
 - `--timeout-seconds`: override the per-request timeout for all benchmark calls.
 - `--output-dir`: directory for per-server JSON reports and the combined summary/report outputs.
 - `--summary-output`, `--markdown-output`, `--csv-output`: override report destinations.

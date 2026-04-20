@@ -29,6 +29,9 @@ class BenchmarkValidation:
     min_symbol_count: int | None = None
     min_location_count: int | None = None
     min_size_chars: int | None = None
+    expected_type_kinds: list[str] = field(default_factory=list)
+    expected_type_names: list[str] = field(default_factory=list)
+    require_declaration_node: bool | None = None
 
 
 @dataclass(slots=True)
@@ -53,17 +56,46 @@ class BenchmarkEditPoint:
 
 
 @dataclass(slots=True)
+class TspBenchmarkPoint:
+    label: str
+    file_path: Path
+    request: str
+    start_line: int
+    start_character: int
+    end_line: int
+    end_character: int
+    validation: BenchmarkValidation = field(default_factory=BenchmarkValidation)
+
+
+@dataclass(slots=True)
+class TspBenchmarkEditPoint:
+    label: str
+    file_path: Path
+    edit_line: int
+    edit_text: str
+    query_start_line: int
+    query_start_character: int
+    query_end_line: int
+    query_end_character: int
+    request: str
+    validation: BenchmarkValidation = field(default_factory=BenchmarkValidation)
+
+
+@dataclass(slots=True)
 class BenchmarkSuite:
     name: str
     description: str
     root_path: Path
     workspace_dir: Path
     requirements_file: Path | None
+    protocol: str = "lsp"
     install_packages: list[str] = field(default_factory=list)
     iterations: int = 3
     warmup_iterations: int = 1
     points_by_method: dict[str, list[BenchmarkPoint]] = field(default_factory=dict)
     edit_points: list[BenchmarkEditPoint] = field(default_factory=list)
+    tsp_points: list[TspBenchmarkPoint] = field(default_factory=list)
+    tsp_edit_points: list[TspBenchmarkEditPoint] = field(default_factory=list)
 
 
 def discover_benchmark_suites(benchmark_root: Path | None = None) -> dict[str, BenchmarkSuite]:
@@ -89,6 +121,7 @@ def load_benchmark_suite(config_path: Path) -> BenchmarkSuite:
     workspace_dir = suite_root / _pick(data, "workspace_dir", "WORKSPACE_DIR", default="src")
     requirements_name = _pick(data, "requirements_file", "ENV_SOURCE", default=None)
     requirements_file = None if requirements_name is None else suite_root / requirements_name
+    protocol = str(_pick(data, "protocol", "PROTOCOL", default="lsp")).lower()
     points_by_method: dict[str, list[BenchmarkPoint]] = {}
     for config_key, method in METHOD_CONFIG_KEYS.items():
         raw_points = _pick(data, config_key, config_key.upper(), default=[])
@@ -97,17 +130,24 @@ def load_benchmark_suite(config_path: Path) -> BenchmarkSuite:
     for config_key, method in EDIT_METHOD_CONFIG_KEYS.items():
         raw_points = _pick(data, config_key, config_key.upper(), default=[])
         edit_points.extend(_load_edit_point(item, suite_root, method) for item in raw_points)
+    raw_tsp_points = _pick(data, "tsp_points", "TSP_POINTS", default=[])
+    tsp_points = [_load_tsp_point(item, suite_root) for item in raw_tsp_points]
+    raw_tsp_edit_points = _pick(data, "tsp_edit_points", "TSP_EDIT_POINTS", default=[])
+    tsp_edit_points = [_load_tsp_edit_point(item, suite_root) for item in raw_tsp_edit_points]
     return BenchmarkSuite(
         name=_pick(data, "name", "TEST_NAME", default=suite_root.name),
         description=_pick(data, "description", "DESCRIPTION", default=f"Benchmark suite for {suite_root.name}."),
         root_path=suite_root,
         workspace_dir=workspace_dir,
         requirements_file=requirements_file,
+        protocol=protocol,
         install_packages=list(_pick(data, "install_packages", "INSTALL_PACKAGE", default=[])),
         iterations=int(_pick(data, "iterations", "ITERATIONS", default=3)),
         warmup_iterations=int(_pick(data, "warmup_iterations", "WARMUP_ITERATIONS", default=1)),
         points_by_method={key: value for key, value in points_by_method.items() if value},
         edit_points=edit_points,
+        tsp_points=tsp_points,
+        tsp_edit_points=tsp_edit_points,
     )
 
 
@@ -136,6 +176,36 @@ def _load_edit_point(data: dict[str, Any], suite_root: Path, query_method: str) 
     )
 
 
+def _load_tsp_point(data: dict[str, Any], suite_root: Path) -> TspBenchmarkPoint:
+    label = data.get("label") or f"{data['file']}:{data['start_line']}:{data['start_character']}"
+    return TspBenchmarkPoint(
+        label=label,
+        file_path=_resolve_point_path(suite_root, data["file"]),
+        request=str(data["request"]),
+        start_line=int(data["start_line"]),
+        start_character=int(data["start_character"]),
+        end_line=int(data.get("end_line", data["start_line"])),
+        end_character=int(data.get("end_character", data["start_character"])),
+        validation=_load_validation(data.get("validation", {})),
+    )
+
+
+def _load_tsp_edit_point(data: dict[str, Any], suite_root: Path) -> TspBenchmarkEditPoint:
+    label = data.get("label") or f"{data['file']}:{data['edit_line']}:tsp-edit"
+    return TspBenchmarkEditPoint(
+        label=label,
+        file_path=_resolve_point_path(suite_root, data["file"]),
+        edit_line=int(data["edit_line"]),
+        edit_text=str(data["edit_text"]),
+        query_start_line=int(data["query_start_line"]),
+        query_start_character=int(data["query_start_character"]),
+        query_end_line=int(data.get("query_end_line", data["query_start_line"])),
+        query_end_character=int(data.get("query_end_character", data["query_start_character"])),
+        request=str(data["request"]),
+        validation=_load_validation(data.get("validation", {})),
+    )
+
+
 def _load_validation(data: dict[str, Any]) -> BenchmarkValidation:
     return BenchmarkValidation(
         require_non_empty=_read_optional_bool(data.get("requireNonEmpty")),
@@ -144,6 +214,9 @@ def _load_validation(data: dict[str, Any]) -> BenchmarkValidation:
         min_symbol_count=_read_optional_int(data.get("minSymbolCount")),
         min_location_count=_read_optional_int(data.get("minLocationCount")),
         min_size_chars=_read_optional_int(data.get("minSizeChars")),
+        expected_type_kinds=[str(item) for item in data.get("expectedTypeKinds", [])],
+        expected_type_names=[str(item) for item in data.get("expectedTypeNames", [])],
+        require_declaration_node=_read_optional_bool(data.get("requireDeclarationNode")),
     )
 
 

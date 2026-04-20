@@ -4,7 +4,7 @@
   ],
   "venvPath": ".",
   "venv": ".venv",
-  "pythonVersion": "3.14",
+  "pythonVersion": "3.13",
   "executionEnvironments": [
     {
       "root": "src",

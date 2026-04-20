@@ -93,11 +93,13 @@ def _render_benchmark_report(
     lines.append("")
     lines.append("*Wall clock ms includes server startup, warmup iterations, and shutdown — not just measured requests.*")
 
-    suite_order = summary.get("requested_benchmarks") or _ordered_unique(
+    discovered_suite_order = _ordered_unique(
         report.get("name")
         for server in servers
         for report in server["report"].get("benchmark_reports", [])
     )
+    requested_suite_order = summary.get("requested_benchmarks") if isinstance(summary.get("requested_benchmarks"), list) else []
+    suite_order = _ordered_unique([*requested_suite_order, *discovered_suite_order])
     for suite_name in suite_order:
         suite_servers = []
         for server in servers:
@@ -154,7 +156,7 @@ def _render_benchmark_report(
                 if baseline_point is not None:
                     baseline_metrics = _measured_request_metrics(baseline_point)
                     metric_key, measure_label = _preferred_result_metric(baseline_point.get("method"), baseline_metrics)
-                    baseline_value = _mean_numeric(baseline_metrics, metric_key) if metric_key is not None else None
+                    baseline_value = _metric_value(baseline_metrics, metric_key) if metric_key is not None else None
             for server in suite_servers:
                 point = _find_point(server["suite_report"].get("points", []), point_key)
                 if point is None:
@@ -163,7 +165,7 @@ def _render_benchmark_report(
                 method = point.get("method")
                 measured_metrics = _measured_request_metrics(point)
                 metric_key, measure_label = _preferred_result_metric(point.get("method"), measured_metrics)
-                result_value = _mean_numeric(measured_metrics, metric_key) if metric_key is not None else None
+                result_value = _metric_value(measured_metrics, metric_key) if metric_key is not None else None
                 if baseline_value is None and baseline_suite_server is None:
                     baseline_value = result_value
                 point_rows.append(
@@ -261,7 +263,7 @@ def _render_scenario_report(
         baseline_report = _find_by_name(baseline_reports, scenario_name)
         baseline_metrics = [] if baseline_report is None else _request_metrics(baseline_report.get("metrics", []))
         metric_key, measure_label = _preferred_result_metric_for_scenario(scenario_name, baseline_metrics)
-        baseline_value = None if baseline_report is None or metric_key is None else _mean_numeric(baseline_metrics, metric_key)
+        baseline_value = None if baseline_report is None or metric_key is None else _metric_value(baseline_metrics, metric_key)
         lines.append("")
         lines.append(f"## Scenario: {scenario_name}")
         lines.append("")
@@ -278,7 +280,7 @@ def _render_scenario_report(
                 continue
             request_metrics = _request_metrics(report.get("metrics", []))
             metric_key, measure_label = _preferred_result_metric_for_scenario(scenario_name, request_metrics)
-            metric_value = None if metric_key is None else _mean_numeric(request_metrics, metric_key)
+            metric_value = None if metric_key is None else _metric_value(request_metrics, metric_key)
             if baseline_value is None and baseline_server is None:
                 baseline_value = metric_value
             avg_request_ms = _mean_duration(request_metrics)
@@ -335,9 +337,16 @@ def _metadata_lines(summary_path: Path, summary: dict[str, Any], baseline_server
         lines.append(f"- Servers: {', '.join(str(item) for item in requested_servers)}")
     if baseline_server is not None:
         lines.append(f"- Baseline server: {baseline_server['display_name']} ({baseline_server['id']})")
-    requested_benchmarks = summary.get("requested_benchmarks")
-    if isinstance(requested_benchmarks, list) and requested_benchmarks:
-        lines.append(f"- Benchmarks: {', '.join(str(item) for item in requested_benchmarks)}")
+    requested_benchmarks = summary.get("requested_benchmarks") if isinstance(summary.get("requested_benchmarks"), list) else []
+    per_server_benchmarks = _ordered_unique(
+        benchmark
+        for server in summary.get("servers", [])
+        if isinstance(server, dict)
+        for benchmark in server.get("requested_benchmarks", [])
+    )
+    benchmark_list = _ordered_unique([*requested_benchmarks, *per_server_benchmarks])
+    if benchmark_list:
+        lines.append(f"- Benchmarks: {', '.join(str(item) for item in benchmark_list)}")
     requested_scenarios = summary.get("requested_scenarios")
     if isinstance(requested_scenarios, list) and requested_scenarios:
         lines.append(f"- Scenarios: {', '.join(str(item) for item in requested_scenarios)}")
@@ -442,17 +451,28 @@ def _non_empty_rate(metrics: list[dict[str, Any]]) -> float | None:
     return len(non_empty) / len(present)
 
 
-def _mean_numeric(metrics: list[dict[str, Any]], key: str) -> float | None:
-    values: list[float] = []
+def _metric_value(metrics: list[dict[str, Any]], key: str | None) -> float | str | None:
+    if key is None:
+        return None
+    numeric_values: list[float] = []
+    text_values: list[str] = []
     for metric in metrics:
         result_summary = metric.get("result_summary", {})
         value = result_summary.get(key)
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
+        if isinstance(value, bool):
             continue
-        values.append(float(value))
-    if not values:
-        return None
-    return sum(values) / len(values)
+        if isinstance(value, (int, float)):
+            numeric_values.append(float(value))
+        elif isinstance(value, str):
+            text_values.append(value)
+    if numeric_values:
+        return sum(numeric_values) / len(numeric_values)
+    if text_values:
+        counts: dict[str, int] = {}
+        for value in text_values:
+            counts[value] = counts.get(value, 0) + 1
+        return sorted(counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+    return None
 
 
 def _mean_duration(metrics: list[dict[str, Any]]) -> float | None:
@@ -469,6 +489,9 @@ def _preferred_result_metric(method: str | None, metrics: list[dict[str, Any]]) 
         "textDocument/references": ("location_count", "References found"),
         "textDocument/documentSymbol": ("symbol_count", "Symbols found"),
         "textDocument/hover": ("hover_text_char_count", "Hover length"),
+        "typeServer/getComputedType": ("type_name", "Type name"),
+        "typeServer/getDeclaredType": ("type_name", "Type name"),
+        "typeServer/getExpectedType": ("type_name", "Type name"),
     }
     if method in candidates:
         key, label = candidates[method]
@@ -553,15 +576,19 @@ def _format_percent(value: float | None) -> str:
     return f"{value * 100:.0f}%"
 
 
-def _format_result_value(value: float | None) -> str:
+def _format_result_value(value: float | str | None) -> str:
     if value is None:
         return "n/a"
+    if isinstance(value, str):
+        return _escape_table(value)
     return f"{value:.2f}"
 
 
-def _format_delta(value: float | None, baseline: float | None) -> str:
+def _format_delta(value: float | str | None, baseline: float | str | None) -> str:
     if value is None or baseline is None:
         return "n/a"
+    if isinstance(value, str) or isinstance(baseline, str):
+        return "same" if value == baseline else "different"
     delta = value - baseline
     if abs(delta) < 0.005:
         return "0.00"

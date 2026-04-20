@@ -19,7 +19,7 @@ from python_lsp_compare.runner import run_benchmarks
 class BenchmarkSuiteTests(unittest.TestCase):
     def test_discover_bundled_benchmark_suites(self) -> None:
         suites = discover_benchmark_suites()
-        self.assertTrue({"sqlalchemy", "web", "data_science", "django", "pandas", "transformers"}.issubset(suites))
+        self.assertTrue({"sqlalchemy", "web", "data_science", "django", "pandas", "transformers", "tsp_core"}.issubset(suites))
 
         django_suite = suites["django"]
         self.assertEqual(django_suite.requirements_file.name, "requirements.txt")
@@ -42,6 +42,49 @@ class BenchmarkSuiteTests(unittest.TestCase):
         self.assertEqual(suite.warmup_iterations, 1)
         self.assertIn("textDocument/hover", suite.points_by_method)
         self.assertIn("textDocument/references", suite.points_by_method)
+
+    def test_discover_tsp_benchmark_suite(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            suite_root = temp_path / "tsp_fixture"
+            source_dir = suite_root / "src"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            (source_dir / "flow.py").write_text(
+                "value: int | str = 1\nif isinstance(value, int):\n    narrowed = value\n",
+                encoding="utf-8",
+            )
+            (suite_root / "config.json").write_text(
+                json.dumps(
+                    {
+                        "name": "tsp_fixture",
+                        "description": "Fixture TSP benchmark suite.",
+                        "protocol": "tsp",
+                        "workspace_dir": "src",
+                        "iterations": 2,
+                        "warmup_iterations": 1,
+                        "tsp_points": [
+                            {
+                                "label": "narrowed type",
+                                "request": "typeServer/getComputedType",
+                                "file": "src/flow.py",
+                                "start_line": 2,
+                                "start_character": 15,
+                                "end_line": 2,
+                                "end_character": 20,
+                                "validation": {"requireNonEmpty": True, "minSizeChars": 10},
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            suites = discover_benchmark_suites(temp_path)
+            self.assertIn("tsp_fixture", suites)
+            suite = suites["tsp_fixture"]
+            self.assertEqual(suite.protocol, "tsp")
+            self.assertEqual(len(suite.tsp_points), 1)
+            self.assertEqual(suite.tsp_points[0].request, "typeServer/getComputedType")
 
     def test_run_benchmark_suite(self) -> None:
         server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
@@ -66,6 +109,169 @@ class BenchmarkSuiteTests(unittest.TestCase):
 
         completion_point = next(point for point in suite_report.points if point.method == "textDocument/completion")
         self.assertEqual(completion_point.summary["result_summary"]["metrics"]["completion_item_count"]["mean"], 1.0)
+
+    def test_run_tsp_benchmark_suite(self) -> None:
+        server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            suite_root = temp_path / "tsp_fixture"
+            source_dir = suite_root / "src"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            (source_dir / "flow.py").write_text(
+                "value: int | str = 1\nif isinstance(value, int):\n    narrowed = value\n",
+                encoding="utf-8",
+            )
+            (suite_root / "config.json").write_text(
+                json.dumps(
+                    {
+                        "name": "tsp_fixture",
+                        "description": "Fixture TSP benchmark suite.",
+                        "protocol": "tsp",
+                        "workspace_dir": "src",
+                        "iterations": 2,
+                        "warmup_iterations": 1,
+                        "tsp_points": [
+                            {
+                                "label": "narrowed type",
+                                "request": "typeServer/getComputedType",
+                                "file": "src/flow.py",
+                                "start_line": 2,
+                                "start_character": 15,
+                                "end_line": 2,
+                                "end_character": 20,
+                                "validation": {
+                                    "requireNonEmpty": True,
+                                    "expectedTypeKinds": ["Class"],
+                                    "minSizeChars": 10,
+                                },
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = run_benchmarks(
+                command=[sys.executable, str(server_script)],
+                benchmark_names=["tsp_fixture"],
+                benchmark_root=temp_path,
+                timeout_seconds=2.0,
+            )
+
+            self.assertEqual(report.requested_benchmarks, ["tsp_fixture"])
+            suite_report = report.benchmark_reports[0]
+            self.assertTrue(suite_report.success)
+            self.assertEqual(len(suite_report.points), 1)
+            self.assertEqual(suite_report.points[0].method, "typeServer/getComputedType")
+            self.assertEqual(
+                suite_report.points[0].summary["result_summary"]["metrics"]["type_name"]["representative"],
+                "int",
+            )
+            self.assertTrue(suite_report.points[0].summary["validation"]["passed"])
+
+    def test_run_tsp_edit_benchmark_suite(self) -> None:
+        server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            suite_root = temp_path / "tsp_edit_fixture"
+            source_dir = suite_root / "src"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            (source_dir / "flow.py").write_text(
+                "value: int | str = 1\nif isinstance(value, int):\n    narrowed = value\n",
+                encoding="utf-8",
+            )
+            (suite_root / "config.json").write_text(
+                json.dumps(
+                    {
+                        "name": "tsp_edit_fixture",
+                        "description": "Fixture TSP edit benchmark suite.",
+                        "protocol": "tsp",
+                        "workspace_dir": "src",
+                        "iterations": 2,
+                        "warmup_iterations": 1,
+                        "tsp_edit_points": [
+                            {
+                                "label": "edit then computed type",
+                                "request": "typeServer/getComputedType",
+                                "file": "src/flow.py",
+                                "edit_line": 0,
+                                "edit_text": "value = 1",
+                                "query_start_line": 2,
+                                "query_start_character": 15,
+                                "query_end_line": 2,
+                                "query_end_character": 20,
+                                "validation": {"requireNonEmpty": True, "minSizeChars": 10},
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = run_benchmarks(
+                command=[sys.executable, str(server_script)],
+                benchmark_names=["tsp_edit_fixture"],
+                benchmark_root=temp_path,
+                timeout_seconds=2.0,
+            )
+
+            suite_report = report.benchmark_reports[0]
+            self.assertTrue(suite_report.success)
+            self.assertEqual(len(suite_report.points), 1)
+            self.assertEqual(suite_report.points[0].method, "typeServer/getComputedType")
+            self.assertIn("edit+getComputedType", suite_report.points[0].label)
+
+    def test_tsp_benchmark_validation_fails_on_unexpected_type_name(self) -> None:
+        server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            suite_root = temp_path / "tsp_invalid"
+            source_dir = suite_root / "src"
+            source_dir.mkdir(parents=True, exist_ok=True)
+            (source_dir / "flow.py").write_text(
+                "value: int | str = 1\nif isinstance(value, int):\n    narrowed = value\n",
+                encoding="utf-8",
+            )
+            (suite_root / "config.json").write_text(
+                json.dumps(
+                    {
+                        "name": "tsp_invalid",
+                        "description": "Invalid TSP validation fixture.",
+                        "protocol": "tsp",
+                        "workspace_dir": "src",
+                        "iterations": 2,
+                        "warmup_iterations": 1,
+                        "tsp_points": [
+                            {
+                                "label": "wrong type expectation",
+                                "request": "typeServer/getComputedType",
+                                "file": "src/flow.py",
+                                "start_line": 2,
+                                "start_character": 15,
+                                "end_line": 2,
+                                "end_character": 20,
+                                "validation": {
+                                    "requireNonEmpty": True,
+                                    "expectedTypeNames": ["str"],
+                                    "requireDeclarationNode": True,
+                                },
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            report = run_benchmarks(
+                command=[sys.executable, str(server_script)],
+                benchmark_names=["tsp_invalid"],
+                benchmark_root=temp_path,
+                timeout_seconds=2.0,
+            )
+
+            suite_report = report.benchmark_reports[0]
+            self.assertFalse(suite_report.success)
+            self.assertIn("type_name", suite_report.points[0].error_message)
 
     def test_prepare_benchmark_environment_writes_pyrightconfig_for_suite_venv(self) -> None:
         suite = discover_benchmark_suites(Path(__file__).parent / "fixtures")["fixture_suite"]

@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from python_lsp_compare.server_download import ALL_PYPI_SERVER_SPECS, ALL_SERVER_SPECS, get_latest_release_tag
+from python_lsp_compare.server_download import ALL_PYPI_SERVER_SPECS, ALL_SERVER_SPECS, get_latest_pypi_version, get_latest_release_tag
 
 
 class _FakeResponse:
@@ -29,6 +29,11 @@ class ServerDownloadTests(unittest.TestCase):
     def test_pyrefly_is_installed_from_pypi_venv(self) -> None:
         self.assertIn("pyrefly", {spec.id for spec in ALL_PYPI_SERVER_SPECS})
         self.assertNotIn("pyrefly", {spec.id for spec in ALL_SERVER_SPECS})
+
+    def test_get_latest_pypi_version_reads_version_from_pypi_json(self) -> None:
+        with patch("urllib.request.urlopen", return_value=_FakeResponse({"info": {"version": "0.62.0"}})):
+            version = get_latest_pypi_version("pyrefly")
+        self.assertEqual(version, "0.62.0")
 
     def test_get_latest_release_tag_falls_back_to_latest_release_with_asset(self) -> None:
         seen_urls: list[str] = []

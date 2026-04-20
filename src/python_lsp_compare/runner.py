@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
-from .benchmark_suites import BenchmarkEditPoint, BenchmarkPoint, BenchmarkSuite, BenchmarkValidation, discover_benchmark_suites
+from .benchmark_suites import BenchmarkEditPoint, BenchmarkPoint, BenchmarkSuite, BenchmarkValidation, TspBenchmarkEditPoint, TspBenchmarkPoint, discover_benchmark_suites
 from .environments import cleanup_benchmark_environment, prepare_benchmark_environment
 from .lsp_client import LspClient
 from .metrics import BenchmarkPointReport, BenchmarkSuiteReport, CallMetric, RunReport, ScenarioReport
@@ -61,22 +61,32 @@ def run_benchmarks(
     environment_root: Path | None = None,
     progress: Callable[[str], None] | None = None,
     response_log_path: Path | None = None,
+    allowed_protocols: Sequence[str] | None = None,
+    command_for_protocol: Callable[[str], Sequence[str]] | None = None,
 ) -> RunReport:
     suites = discover_benchmark_suites(benchmark_root)
     selected_names = list(benchmark_names or suites.keys())
     unknown = [name for name in selected_names if name not in suites]
     if unknown:
         raise ValueError(f"Unknown benchmarks: {', '.join(unknown)}")
+    if allowed_protocols is not None:
+        allowed = set(allowed_protocols)
+        skipped = [name for name in selected_names if suites[name].protocol not in allowed]
+        for name in skipped:
+            _emit_progress(progress, f"[{name}] skipped: protocol {suites[name].protocol} not supported by this server")
+        selected_names = [name for name in selected_names if suites[name].protocol in allowed]
 
     started_at = time.time()
     benchmark_reports: list[BenchmarkSuiteReport] = []
     response_log = _open_response_log(response_log_path)
     try:
         for name in selected_names:
+            suite = suites[name]
+            suite_command = list(command_for_protocol(suite.protocol)) if command_for_protocol is not None else list(command)
             benchmark_reports.append(
                 _run_single_benchmark_suite(
-                    command=command,
-                    suite=suites[name],
+                    command=suite_command,
+                    suite=suite,
                     timeout_seconds=timeout_seconds,
                     install_requirements=install_requirements,
                     python_executable=python_executable or sys.executable,
@@ -204,29 +214,54 @@ def _run_single_benchmark_suite(
         # did_open uses version 1, so the next version is 2.
         document_versions: dict[str, int] = {uri: 2 for uri in opened}
         try:
-            for method, points in suite.points_by_method.items():
-                for point in points:
+            if suite.protocol == "tsp":
+                protocol_version = client.tsp_get_supported_protocol_version(context={"suite": suite.name, "phase": "setup"})
+                _emit_progress(progress, f"[{suite.name}] tsp protocol version: {protocol_version}")
+                for point in suite.tsp_points:
                     point_reports.append(
-                        _run_benchmark_point(
+                        _run_tsp_benchmark_point(
                             client=client,
                             suite=suite,
-                            method=method,
                             point=point,
                             progress=progress,
                             response_log=response_log,
                         )
                     )
-            for edit_point in suite.edit_points:
-                point_reports.append(
-                    _run_edit_benchmark_point(
-                        client=client,
-                        suite=suite,
-                        edit_point=edit_point,
-                        document_versions=document_versions,
-                        progress=progress,
-                        response_log=response_log,
+                for edit_point in suite.tsp_edit_points:
+                    point_reports.append(
+                        _run_tsp_edit_benchmark_point(
+                            client=client,
+                            suite=suite,
+                            edit_point=edit_point,
+                            document_versions=document_versions,
+                            progress=progress,
+                            response_log=response_log,
+                        )
                     )
-                )
+            else:
+                for method, points in suite.points_by_method.items():
+                    for point in points:
+                        point_reports.append(
+                            _run_benchmark_point(
+                                client=client,
+                                suite=suite,
+                                method=method,
+                                point=point,
+                                progress=progress,
+                                response_log=response_log,
+                            )
+                        )
+                for edit_point in suite.edit_points:
+                    point_reports.append(
+                        _run_edit_benchmark_point(
+                            client=client,
+                            suite=suite,
+                            edit_point=edit_point,
+                            document_versions=document_versions,
+                            progress=progress,
+                            response_log=response_log,
+                        )
+                    )
         finally:
             for uri in reversed(opened):
                 client.did_close(uri,)
@@ -323,6 +358,190 @@ def _run_benchmark_point(
         file_path=str(point.file_path),
         line=point.line,
         character=point.character,
+        success=success,
+        warmup_iterations=suite.warmup_iterations,
+        measured_iterations=suite.iterations,
+        metrics=metrics,
+        summary=summary,
+        error_message=error_message,
+    )
+
+
+def _run_tsp_benchmark_point(
+    *,
+    client: LspClient,
+    suite: BenchmarkSuite,
+    point: TspBenchmarkPoint,
+    progress: Callable[[str], None] | None,
+    response_log: io.TextIOBase | None = None,
+) -> BenchmarkPointReport:
+    metrics: list[CallMetric] = []
+    error_message: str | None = None
+    success = True
+    uri = point.file_path.as_uri()
+    _emit_progress(progress, f"[{suite.name}] {point.label} start ({point.request})")
+    for iteration in range(suite.warmup_iterations + suite.iterations):
+        is_warmup = iteration < suite.warmup_iterations
+        context = {
+            "suite": suite.name,
+            "label": point.label,
+            "file_path": str(point.file_path),
+            "line": point.start_line,
+            "character": point.start_character,
+            "phase": "warmup" if is_warmup else "measured",
+            "iteration": iteration + 1 if is_warmup else iteration - suite.warmup_iterations + 1,
+        }
+        try:
+            snapshot = client.tsp_get_snapshot(context={"suite": suite.name, "label": point.label, "phase": "snapshot"})
+            before = len(client.metrics)
+            result = _dispatch_tsp_request(
+                client,
+                point.request,
+                uri,
+                point.start_line,
+                point.start_character,
+                point.end_line,
+                point.end_character,
+                int(snapshot),
+                context,
+            )
+        except Exception as exc:
+            success = False
+            error_message = str(exc)
+            _emit_progress(progress, f"[{suite.name}] {point.label} request failed: {error_message}")
+            break
+        metrics.extend(client.metrics[before:])
+        if response_log is not None and not is_warmup:
+            _write_response_entry(response_log, context, point.request, result)
+
+    measured_metrics = [metric for metric in metrics if metric.context.get("phase") == "measured" and metric.kind == "request"]
+    validation_summary = _validate_benchmark_point_results(point.request, point.validation, measured_metrics)
+    if not validation_summary["passed"]:
+        success = False
+        error_message = _combine_error_messages(error_message, validation_summary["message"])
+    summary = _summarize_metrics(measured_metrics)
+    summary["validation"] = validation_summary
+    _emit_progress(
+        progress,
+        f"[{suite.name}] {point.label} {'ok' if success else 'failed'}"
+        + (f": {error_message}" if error_message else ""),
+    )
+    return BenchmarkPointReport(
+        label=point.label,
+        method=point.request,
+        file_path=str(point.file_path),
+        line=point.start_line,
+        character=point.start_character,
+        success=success,
+        warmup_iterations=suite.warmup_iterations,
+        measured_iterations=suite.iterations,
+        metrics=metrics,
+        summary=summary,
+        error_message=error_message,
+    )
+
+
+def _run_tsp_edit_benchmark_point(
+    *,
+    client: LspClient,
+    suite: BenchmarkSuite,
+    edit_point: TspBenchmarkEditPoint,
+    document_versions: dict[str, int],
+    progress: Callable[[str], None] | None,
+    response_log: io.TextIOBase | None = None,
+) -> BenchmarkPointReport:
+    metrics: list[CallMetric] = []
+    error_message: str | None = None
+    success = True
+    uri = edit_point.file_path.as_uri()
+    label = f"{edit_point.label} (edit+{edit_point.request.split('/')[-1]})"
+    _emit_progress(progress, f"[{suite.name}] {label} start")
+    version = document_versions.get(uri, 2)
+    for iteration in range(suite.warmup_iterations + suite.iterations):
+        is_warmup = iteration < suite.warmup_iterations
+        context = {
+            "suite": suite.name,
+            "label": label,
+            "file_path": str(edit_point.file_path),
+            "line": edit_point.query_start_line,
+            "character": edit_point.query_start_character,
+            "phase": "warmup" if is_warmup else "measured",
+            "iteration": iteration + 1 if is_warmup else iteration - suite.warmup_iterations + 1,
+        }
+        try:
+            insert_line = edit_point.edit_line
+            new_line = edit_point.edit_text + "\n"
+            client.did_change(
+                uri,
+                version,
+                [
+                    {
+                        "range": {
+                            "start": {"line": insert_line, "character": 0},
+                            "end": {"line": insert_line, "character": 0},
+                        },
+                        "text": new_line,
+                    }
+                ],
+                context={"suite": suite.name, "label": label, "phase": "edit"},
+            )
+            version += 1
+            snapshot = client.tsp_get_snapshot(context={"suite": suite.name, "label": label, "phase": "snapshot"})
+            before = len(client.metrics)
+            result = _dispatch_tsp_request(
+                client,
+                edit_point.request,
+                uri,
+                edit_point.query_start_line,
+                edit_point.query_start_character,
+                edit_point.query_end_line,
+                edit_point.query_end_character,
+                int(snapshot),
+                context,
+            )
+            metrics.extend(client.metrics[before:])
+            if response_log is not None and not is_warmup:
+                _write_response_entry(response_log, context, edit_point.request, result)
+            client.did_change(
+                uri,
+                version,
+                [
+                    {
+                        "range": {
+                            "start": {"line": insert_line, "character": 0},
+                            "end": {"line": insert_line + 1, "character": 0},
+                        },
+                        "text": "",
+                    }
+                ],
+                context={"suite": suite.name, "label": label, "phase": "revert"},
+            )
+            version += 1
+        except Exception as exc:
+            success = False
+            error_message = str(exc)
+            _emit_progress(progress, f"[{suite.name}] {label} request failed: {error_message}")
+            break
+
+    document_versions[uri] = version
+    measured_metrics = [metric for metric in metrics if metric.context.get("phase") == "measured" and metric.kind == "request"]
+    validation_summary = _validate_benchmark_point_results(edit_point.request, edit_point.validation, measured_metrics)
+    if not validation_summary["passed"]:
+        success = False
+        error_message = _combine_error_messages(error_message, validation_summary["message"])
+    summary = _summarize_metrics(measured_metrics)
+    summary["validation"] = validation_summary
+    _emit_progress(
+        progress,
+        f"[{suite.name}] {label} {'ok' if success else 'failed'}"
+        + (f": {error_message}" if error_message else ""),
+    )
+    return BenchmarkPointReport(
+        label=label,
+        method=edit_point.request,
+        file_path=str(edit_point.file_path),
+        line=edit_point.query_start_line,
+        character=edit_point.query_start_character,
         success=success,
         warmup_iterations=suite.warmup_iterations,
         measured_iterations=suite.iterations,
@@ -463,6 +682,33 @@ def _dispatch_benchmark_request(
     raise ValueError(f"Unsupported benchmark method: {method}")
 
 
+def _dispatch_tsp_request(
+    client: LspClient,
+    method: str,
+    uri: str,
+    start_line: int,
+    start_character: int,
+    end_line: int,
+    end_character: int,
+    snapshot: int,
+    context: dict[str, object],
+) -> object:
+    node = {
+        "uri": uri,
+        "range": {
+            "start": {"line": start_line, "character": start_character},
+            "end": {"line": end_line, "character": end_character},
+        },
+    }
+    if method == "typeServer/getComputedType":
+        return client.tsp_get_computed_type(node, snapshot, context=context)
+    if method == "typeServer/getDeclaredType":
+        return client.tsp_get_declared_type(node, snapshot, context=context)
+    if method == "typeServer/getExpectedType":
+        return client.tsp_get_expected_type(node, snapshot, context=context)
+    raise ValueError(f"Unsupported TSP benchmark method: {method}")
+
+
 def _open_benchmark_documents(client: LspClient, suite: BenchmarkSuite) -> list[str]:
     opened: list[str] = []
     seen: set[str] = set()
@@ -475,6 +721,20 @@ def _open_benchmark_documents(client: LspClient, suite: BenchmarkSuite) -> list[
             client.did_open(uri, point.file_path.read_text(encoding="utf-8"), context={"suite": suite.name, "phase": "setup"})
             opened.append(uri)
     for edit_point in suite.edit_points:
+        uri = edit_point.file_path.as_uri()
+        if uri in seen:
+            continue
+        seen.add(uri)
+        client.did_open(uri, edit_point.file_path.read_text(encoding="utf-8"), context={"suite": suite.name, "phase": "setup"})
+        opened.append(uri)
+    for point in suite.tsp_points:
+        uri = point.file_path.as_uri()
+        if uri in seen:
+            continue
+        seen.add(uri)
+        client.did_open(uri, point.file_path.read_text(encoding="utf-8"), context={"suite": suite.name, "phase": "setup"})
+        opened.append(uri)
+    for edit_point in suite.tsp_edit_points:
         uri = edit_point.file_path.as_uri()
         if uri in seen:
             continue
@@ -546,21 +806,34 @@ def _summarize_result_metrics(metrics: Sequence[CallMetric]) -> dict[str, object
     non_empty_count = len([metric for metric in result_metrics if metric.result_summary.get("present") and not metric.result_summary.get("empty")])
 
     numeric_fields: dict[str, list[float]] = {}
+    text_fields: dict[str, list[str]] = {}
     for metric in result_metrics:
         for key, value in metric.result_summary.items():
-            if isinstance(value, bool) or not isinstance(value, (int, float)):
+            if isinstance(value, bool):
                 continue
-            numeric_fields.setdefault(key, []).append(float(value))
+            if isinstance(value, (int, float)):
+                numeric_fields.setdefault(key, []).append(float(value))
+                continue
+            if isinstance(value, str):
+                text_fields.setdefault(key, []).append(value)
+
+    summarized_metrics: dict[str, object] = {
+        key: _summarize_numeric_values(values)
+        for key, values in sorted(numeric_fields.items())
+    }
+    summarized_metrics.update(
+        {
+            key: _summarize_text_values(values)
+            for key, values in sorted(text_fields.items())
+        }
+    )
 
     return {
         "present_count": present_count,
         "empty_count": empty_count,
         "non_empty_count": non_empty_count,
         "non_empty_rate": None if present_count == 0 else non_empty_count / present_count,
-        "metrics": {
-            key: _summarize_numeric_values(values)
-            for key, values in sorted(numeric_fields.items())
-        },
+        "metrics": summarized_metrics,
     }
 
 
@@ -574,6 +847,20 @@ def _summarize_numeric_values(values: Sequence[float]) -> dict[str, float | None
         "mean": statistics.fmean(sorted_values),
         "median": statistics.median(sorted_values),
         "p95": _percentile(sorted_values, 0.95),
+    }
+
+
+def _summarize_text_values(values: Sequence[str]) -> dict[str, object]:
+    if not values:
+        return {"representative": None, "unique_values": [], "count": 0}
+    counts: dict[str, int] = {}
+    for value in values:
+        counts[value] = counts.get(value, 0) + 1
+    representative = sorted(counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+    return {
+        "representative": representative,
+        "unique_values": sorted(counts),
+        "count": len(values),
     }
 
 
@@ -610,6 +897,25 @@ def _validate_benchmark_point_results(
             failures.append(
                 f"iteration {metric.context.get('iteration', '?')}: size_chars={result_summary.get('size_chars')} < {thresholds['min_size_chars']}"
             )
+        expected_type_kinds = thresholds.get("expected_type_kinds")
+        if isinstance(expected_type_kinds, list) and expected_type_kinds:
+            actual_type_kind = result_summary.get("type_kind")
+            if actual_type_kind not in expected_type_kinds:
+                failures.append(
+                    f"iteration {metric.context.get('iteration', '?')}: type_kind={actual_type_kind!r} not in {expected_type_kinds}"
+                )
+        expected_type_names = thresholds.get("expected_type_names")
+        if isinstance(expected_type_names, list) and expected_type_names:
+            actual_type_name = result_summary.get("type_name")
+            if actual_type_name not in expected_type_names:
+                failures.append(
+                    f"iteration {metric.context.get('iteration', '?')}: type_name={actual_type_name!r} not in {expected_type_names}"
+                )
+        require_declaration_node = thresholds.get("require_declaration_node")
+        if require_declaration_node is True and not result_summary.get("has_declaration_node"):
+            failures.append(
+                f"iteration {metric.context.get('iteration', '?')}: missing declaration node"
+            )
     message = None if not failures else "Result validation failed: " + "; ".join(failures)
     return {
         "passed": not failures,
@@ -620,14 +926,17 @@ def _validate_benchmark_point_results(
     }
 
 
-def _effective_validation_thresholds(method: str, validation: BenchmarkValidation) -> dict[str, int | bool | None]:
-    thresholds: dict[str, int | bool | None] = {
+def _effective_validation_thresholds(method: str, validation: BenchmarkValidation) -> dict[str, int | bool | list[str] | None]:
+    thresholds: dict[str, int | bool | list[str] | None] = {
         "require_non_empty": validation.require_non_empty,
         "min_completion_items": validation.min_completion_items,
         "min_hover_text_chars": validation.min_hover_text_chars,
         "min_symbol_count": validation.min_symbol_count,
         "min_location_count": validation.min_location_count,
         "min_size_chars": validation.min_size_chars,
+        "expected_type_kinds": validation.expected_type_kinds,
+        "expected_type_names": validation.expected_type_names,
+        "require_declaration_node": validation.require_declaration_node,
     }
     if method == "textDocument/completion" and thresholds["min_completion_items"] is None:
         thresholds["min_completion_items"] = 1
@@ -644,6 +953,9 @@ def _effective_validation_thresholds(method: str, validation: BenchmarkValidatio
             "textDocument/documentSymbol",
             "textDocument/definition",
             "textDocument/references",
+            "typeServer/getComputedType",
+            "typeServer/getDeclaredType",
+            "typeServer/getExpectedType",
         }
     return thresholds
 

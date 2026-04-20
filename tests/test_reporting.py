@@ -9,6 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from python_lsp_compare.cli import main
+from python_lsp_compare.report_csv import build_csv_rows
 from python_lsp_compare.report_markdown import render_markdown_report
 
 
@@ -212,6 +213,141 @@ class ReportingTests(unittest.TestCase):
             result_metrics = completion_point["summary"]["result_summary"]["metrics"]
             self.assertEqual(result_metrics["completion_item_count"]["mean"], 1.0)
             self.assertEqual(completion_point["summary"]["result_summary"]["non_empty_count"], 2)
+
+    def test_render_markdown_report_shows_tsp_type_name_differences(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            first_report_path = temp_path / "first.json"
+            second_report_path = temp_path / "second.json"
+            summary_path = temp_path / "summary.json"
+
+            def build_tsp_metric(duration_ms: float, type_name: str) -> dict[str, object]:
+                return {
+                    "kind": "request",
+                    "method": "typeServer/getComputedType",
+                    "duration_ms": duration_ms,
+                    "result_summary": {
+                        "present": True,
+                        "empty": False,
+                        "type_name": type_name,
+                        "size_chars": 25,
+                    },
+                    "context": {"phase": "measured"},
+                }
+
+            def build_report(type_name: str) -> dict[str, object]:
+                return {
+                    "benchmark_reports": [
+                        {
+                            "name": "tsp_fixture",
+                            "success": True,
+                            "total_duration_ms": 10.0,
+                            "points": [
+                                {
+                                    "label": "narrowed type",
+                                    "method": "typeServer/getComputedType",
+                                    "file_path": "flow.py",
+                                    "line": 1,
+                                    "character": 1,
+                                    "success": True,
+                                    "summary": {
+                                        "mean_ms": 1.0,
+                                        "p95_ms": 1.0,
+                                        "validation": {"passed": True, "failure_count": 0},
+                                    },
+                                    "metrics": [build_tsp_metric(1.0, type_name), build_tsp_metric(1.0, type_name)],
+                                }
+                            ],
+                        }
+                    ]
+                }
+
+            first_report_path.write_text(json.dumps(build_report("int")), encoding="utf-8")
+            second_report_path.write_text(json.dumps(build_report("str")), encoding="utf-8")
+            summary_path.write_text(
+                json.dumps(
+                    {
+                        "generated_at": "20260320T000000Z",
+                        "baseline_server": "baseline",
+                        "requested_benchmarks": ["tsp_fixture"],
+                        "servers": [
+                            {"id": "baseline", "display_name": "Baseline", "output_path": str(first_report_path), "success": True},
+                            {"id": "candidate", "display_name": "Candidate", "output_path": str(second_report_path), "success": True},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            markdown = render_markdown_report(summary_path, baseline_server_id="baseline")
+            rows = build_csv_rows(summary_path, baseline_server_id="baseline")
+
+            self.assertIn("Type name", markdown)
+            self.assertIn("int", markdown)
+            self.assertIn("str", markdown)
+            self.assertTrue(any(row["result_metric_name"] == "type_name" for row in rows))
+
+    def test_render_markdown_report_includes_server_only_tsp_benchmark(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            pyrefly_report_path = temp_path / "pyrefly.json"
+            other_report_path = temp_path / "other.json"
+            summary_path = temp_path / "summary.json"
+
+            def build_tsp_report() -> dict[str, object]:
+                return {
+                    "benchmark_reports": [
+                        {
+                            "name": "tsp_core",
+                            "success": True,
+                            "total_duration_ms": 10.0,
+                            "points": [
+                                {
+                                    "label": "narrowed type",
+                                    "method": "typeServer/getComputedType",
+                                    "file_path": "flow.py",
+                                    "line": 1,
+                                    "character": 1,
+                                    "success": True,
+                                    "summary": {
+                                        "mean_ms": 1.0,
+                                        "p95_ms": 1.0,
+                                        "validation": {"passed": True, "failure_count": 0},
+                                    },
+                                    "metrics": [
+                                        {
+                                            "kind": "request",
+                                            "method": "typeServer/getComputedType",
+                                            "duration_ms": 1.0,
+                                            "result_summary": {"present": True, "empty": False, "type_name": "int"},
+                                            "context": {"phase": "measured"},
+                                        }
+                                    ],
+                                }
+                            ],
+                        }
+                    ]
+                }
+
+            pyrefly_report_path.write_text(json.dumps(build_tsp_report()), encoding="utf-8")
+            other_report_path.write_text(json.dumps({"benchmark_reports": []}), encoding="utf-8")
+            summary_path.write_text(
+                json.dumps(
+                    {
+                        "generated_at": "20260320T000000Z",
+                        "baseline_server": "pyright",
+                        "requested_benchmarks": ["data_science", "web"],
+                        "servers": [
+                            {"id": "pyrefly", "display_name": "Pyrefly", "output_path": str(pyrefly_report_path), "success": True},
+                            {"id": "pyright", "display_name": "Pyright", "output_path": str(other_report_path), "success": True},
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            markdown = render_markdown_report(summary_path, baseline_server_id="pyright")
+            self.assertIn("## Benchmark: tsp_core", markdown)
 
     def test_render_report_rebuilds_markdown_from_summary_json(self) -> None:
         server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
