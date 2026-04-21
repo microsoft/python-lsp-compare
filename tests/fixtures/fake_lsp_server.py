@@ -63,6 +63,29 @@ def handle_request(message: dict[str, Any], args: argparse.Namespace) -> dict[st
         }
     if method == "shutdown":
         return {"jsonrpc": "2.0", "id": request_id, "result": None}
+    if method == "typeServer/getSupportedProtocolVersion":
+        return {"jsonrpc": "2.0", "id": request_id, "result": "0.4.0"}
+    if method == "typeServer/getSnapshot":
+        return {"jsonrpc": "2.0", "id": request_id, "result": 1}
+    if method in {"typeServer/getComputedType", "typeServer/getDeclaredType", "typeServer/getExpectedType"}:
+        result_name = "int"
+        if method == "typeServer/getDeclaredType":
+            result_name = "int | str"
+        if method == "typeServer/getExpectedType":
+            result_name = "bool"
+        return {
+            "jsonrpc": "2.0",
+            "id": request_id,
+            "result": {
+                "kind": "Class",
+                "name": result_name,
+                "declaration": {
+                    "uri": message["params"]["arg"]["uri"],
+                    "range": message["params"]["arg"]["range"],
+                },
+                "typeArguments": [],
+            },
+        }
     if method == "textDocument/hover":
         return {
             "jsonrpc": "2.0",

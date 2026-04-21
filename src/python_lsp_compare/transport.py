@@ -39,6 +39,7 @@ class StdioJsonRpcTransport:
         self._process: subprocess.Popen[bytes] | None = None
         self._pending: dict[int | str, Queue[JsonRpcResponse]] = {}
         self._pending_lock = threading.Lock()
+        self._write_lock = threading.Lock()
         self._reader_thread: threading.Thread | None = None
         self._stderr_thread: threading.Thread | None = None
         self._closed = threading.Event()
@@ -151,8 +152,9 @@ class StdioJsonRpcTransport:
         body = json.dumps(payload, separators=(",", ":")).encode("utf-8")
         header = f"Content-Length: {len(body)}\r\n\r\n".encode("ascii")
         raw = header + body
-        process.stdin.write(raw)
-        process.stdin.flush()
+        with self._write_lock:
+            process.stdin.write(raw)
+            process.stdin.flush()
         return len(raw)
 
     def _require_process(self) -> subprocess.Popen[bytes]:

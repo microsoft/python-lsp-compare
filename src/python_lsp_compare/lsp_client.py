@@ -168,6 +168,31 @@ class LspClient:
             context=context,
         )
 
+    def tsp_get_supported_protocol_version(self, context: dict[str, Any] | None = None) -> Any:
+        return self.request("typeServer/getSupportedProtocolVersion", None, context=context)
+
+    def tsp_get_snapshot(self, context: dict[str, Any] | None = None) -> Any:
+        return self.request("typeServer/getSnapshot", None, context=context)
+
+    def tsp_get_computed_type(self, node: dict[str, Any], snapshot: int, context: dict[str, Any] | None = None) -> Any:
+        return self.request("typeServer/getComputedType", {"arg": node, "snapshot": snapshot}, context=context)
+
+    def tsp_get_declared_type(self, node: dict[str, Any], snapshot: int, context: dict[str, Any] | None = None) -> Any:
+        return self.request("typeServer/getDeclaredType", {"arg": node, "snapshot": snapshot}, context=context)
+
+    def tsp_get_expected_type(self, node: dict[str, Any], snapshot: int, context: dict[str, Any] | None = None) -> Any:
+        return self.request("typeServer/getExpectedType", {"arg": node, "snapshot": snapshot}, context=context)
+
+    def tsp_set_virtual_file_redirect(self, real_uri: str, virtual_uri: str, context: dict[str, Any] | None = None) -> None:
+        self.notify(
+            "pyright/setVirtualFileRedirect",
+            {"realUri": real_uri, "virtualUri": virtual_uri},
+            context=context,
+        )
+
+    def tsp_remove_virtual_file_redirect(self, real_uri: str, context: dict[str, Any] | None = None) -> None:
+        self.notify("pyright/removeVirtualFileRedirect", {"realUri": real_uri}, context=context)
+
     def request(self, method: str, params: dict[str, Any] | None, context: dict[str, Any] | None = None) -> Any:
         request_id = self._next_request_id
         self._next_request_id += 1

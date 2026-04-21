@@ -22,16 +22,25 @@ class ConfiguredServer:
     enabled: bool = True
     kind: str | None = None
     notes: list[str] = field(default_factory=list)
+    protocols: list[str] = field(default_factory=lambda: ["lsp"])
+    protocol_launch_args: dict[str, list[str]] = field(default_factory=dict)
     source_path: str | None = None
     version_label: str | None = None
 
+    def launch_command_for_protocol(self, protocol: str | None = None) -> list[str]:
+        args = self.args if protocol is None else self.protocol_launch_args.get(protocol, self.args)
+        return [self.command, *args]
+
     @property
     def launch_command(self) -> list[str]:
-        return [self.command, *self.args]
+        return self.launch_command_for_protocol()
+
+    def benchmark_launch_command_for_protocol(self, protocol: str | None = None) -> list[str]:
+        return [*self.launch_command_for_protocol(protocol), *self.benchmark_args]
 
     @property
     def benchmark_launch_command(self) -> list[str]:
-        return [self.command, *self.args, *self.benchmark_args]
+        return self.benchmark_launch_command_for_protocol()
 
 
 def default_local_server_config_path() -> Path:
@@ -66,6 +75,8 @@ def load_server_config_file(config_path: Path | None = None) -> ServerConfigFile
             enabled=bool(item.get("enabled", True)),
             kind=item.get("kind"),
             notes=list(item.get("notes", [])),
+            protocols=list(item.get("protocols", ["lsp"])),
+            protocol_launch_args=_load_protocol_launch_args(item, resolved.parent),
             source_path=item.get("sourcePath"),
         )
         for item in data.get("servers", [])
@@ -89,6 +100,18 @@ def _resolve_default_server_config_path() -> Path:
 def _load_benchmark_args(item: dict[str, Any], base_dir: Path) -> list[str]:
     launch = item.get("launch", {})
     return [_resolve_value(arg, base_dir) for arg in launch.get("benchmarkArgs", [])]
+
+
+def _load_protocol_launch_args(item: dict[str, Any], base_dir: Path) -> dict[str, list[str]]:
+    launch = item.get("launch", {})
+    raw = launch.get("protocolArgs", {})
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        str(protocol): [_resolve_value(arg, base_dir) for arg in args]
+        for protocol, args in raw.items()
+        if isinstance(args, list)
+    }
 
 
 def write_summary(summary_path: Path, payload: dict[str, Any]) -> None:

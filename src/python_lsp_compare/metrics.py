@@ -203,6 +203,20 @@ def _summarize_result(method: str, result: Any) -> dict[str, Any]:
         location_count = _location_count(result)
         if location_count is not None:
             summary["location_count"] = location_count
+    elif method in {"typeServer/getComputedType", "typeServer/getDeclaredType", "typeServer/getExpectedType"}:
+        type_kind = _type_kind(result)
+        if type_kind is not None:
+            summary["type_kind"] = type_kind
+        type_name = _type_name(result)
+        if type_name is not None:
+            summary["type_name"] = type_name
+        union_member_count = _union_member_count(result)
+        if union_member_count is not None:
+            summary["union_member_count"] = union_member_count
+        type_argument_count = _type_argument_count(result)
+        if type_argument_count is not None:
+            summary["type_argument_count"] = type_argument_count
+        summary["has_declaration_node"] = _has_declaration_node(result)
     return summary
 
 
@@ -303,3 +317,35 @@ def _location_count(result: Any) -> int | None:
     if isinstance(result, dict) and "uri" in result and "range" in result:
         return 1
     return None
+
+
+def _type_kind(result: Any) -> str | None:
+    if isinstance(result, dict) and isinstance(result.get("kind"), str):
+        return result["kind"]
+    return None
+
+
+def _type_name(result: Any) -> str | None:
+    if not isinstance(result, dict):
+        return None
+    for key in ("name", "className", "moduleName"):
+        value = result.get(key)
+        if isinstance(value, str):
+            return value
+    return None
+
+
+def _union_member_count(result: Any) -> int | None:
+    if isinstance(result, dict) and isinstance(result.get("subtypes"), list):
+        return len(result["subtypes"])
+    return None
+
+
+def _type_argument_count(result: Any) -> int | None:
+    if isinstance(result, dict) and isinstance(result.get("typeArguments"), list):
+        return len(result["typeArguments"])
+    return None
+
+
+def _has_declaration_node(result: Any) -> bool:
+    return isinstance(result, dict) and isinstance(result.get("declaration"), dict)

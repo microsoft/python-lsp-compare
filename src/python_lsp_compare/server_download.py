@@ -20,6 +20,7 @@ from .server_configs import ConfiguredServer
 
 
 GITHUB_API_BASE = "https://api.github.com"
+PYPI_API_BASE = "https://pypi.org/pypi"
 
 _VERSION_CHECK_INTERVAL_SECONDS = 86400  # 24 hours
 
@@ -41,6 +42,8 @@ class ServerSpec:
     launch_args: list[str] = field(default_factory=list)
     benchmark_args: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    protocols: list[str] = field(default_factory=lambda: ["lsp"])
+    protocol_launch_args: dict[str, list[str]] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -55,6 +58,8 @@ class PypiServerSpec:
     launch_args: list[str] = field(default_factory=list)
     benchmark_args: list[str] = field(default_factory=list)
     notes: list[str] = field(default_factory=list)
+    protocols: list[str] = field(default_factory=lambda: ["lsp"])
+    protocol_launch_args: dict[str, list[str]] = field(default_factory=dict)
 
 
 def _detect_platform() -> str:
@@ -132,6 +137,10 @@ PYREFLY_SPEC = PypiServerSpec(
     notes=[
         "Installed from PyPI into an isolated venv because GitHub release binaries are no longer published.",
     ],
+    protocols=["lsp", "tsp"],
+    protocol_launch_args={
+        "tsp": ["tsp", "--indexing-mode", "lazy-blocking"],
+    },
 )
 
 PYLSP_MYPY_SPEC = PypiServerSpec(
@@ -159,6 +168,22 @@ def _github_json(url: str) -> object:
     req = urllib.request.Request(url, headers={"Accept": "application/vnd.github.v3+json"})
     with urllib.request.urlopen(req) as resp:  # noqa: S310 – URL is constructed from trusted constants
         return json.loads(resp.read())
+
+
+def _pypi_json(url: str) -> object:
+    req = urllib.request.Request(url, headers={"Accept": "application/json"})
+    with urllib.request.urlopen(req) as resp:  # noqa: S310 – URL is constructed from trusted constants
+        return json.loads(resp.read())
+
+
+def get_latest_pypi_version(package: str) -> str:
+    data = _pypi_json(f"{PYPI_API_BASE}/{package}/json")
+    if not isinstance(data, dict):
+        raise RuntimeError(f"Unexpected PyPI payload for {package}: {data!r}")
+    info = data.get("info")
+    if not isinstance(info, dict) or not isinstance(info.get("version"), str):
+        raise RuntimeError(f"PyPI payload for {package} did not include a version")
+    return info["version"]
 
 
 def get_latest_release_tag(repo: str, asset_name: str | None = None) -> str:
@@ -244,6 +269,42 @@ def _resolve_version(
     version = get_latest_release_tag(spec.repo, asset_name=asset_name)
     print(f"  Latest version: {version}")
 
+    versions[spec.id] = {"version": version, "checked_at": now}
+    _save_versions(cache_dir, versions)
+    return version
+
+
+def _resolve_pypi_version(
+    spec: PypiServerSpec,
+    cache_dir: Path,
+    *,
+    installed_version: str | None = None,
+    force: bool = False,
+) -> str | None:
+    versions = _load_versions(cache_dir)
+    entry = versions.get(spec.id)
+    now = time.time()
+
+    if not force and entry is not None:
+        checked_at = entry.get("checked_at", 0)
+        version = entry.get("version")
+        if now - checked_at < _VERSION_CHECK_INTERVAL_SECONDS and isinstance(version, str):
+            return version
+
+    if not spec.packages:
+        return installed_version
+
+    package_name = spec.packages[0]
+    print(f"Fetching latest PyPI version for {package_name}...")
+    try:
+        version = get_latest_pypi_version(package_name)
+    except Exception as exc:
+        if installed_version is not None:
+            print(f"  Warning: failed to check PyPI for {spec.display_name}: {exc}; using installed version {installed_version}")
+            return installed_version
+        raise
+
+    print(f"  Latest version: {version}")
     versions[spec.id] = {"version": version, "checked_at": now}
     _save_versions(cache_dir, versions)
     return version
@@ -379,13 +440,18 @@ def install_pypi_server(
     scripts_dir = venv_dir / ("Scripts" if sys.platform == "win32" else "bin")
     exe_path = scripts_dir / spec.executable_name
 
-    if exe_path.exists() and not force:
-        print(f"  {spec.display_name} already installed at {exe_path}")
-        version = _get_pypi_package_version(spec, scripts_dir)
-        return exe_path, version
+    installed_version = _get_pypi_package_version(spec, scripts_dir) if exe_path.exists() else None
+    latest_version = _resolve_pypi_version(spec, cache_dir, installed_version=installed_version, force=force)
+
+    if exe_path.exists() and not force and installed_version == latest_version:
+        print(f"  {spec.display_name} {installed_version or 'unknown'} already installed at {exe_path}")
+        return exe_path, installed_version
 
     # Create a fresh venv
-    print(f"  Creating venv for {spec.display_name}...")
+    if exe_path.exists() and installed_version != latest_version:
+        print(f"  Updating {spec.display_name} from {installed_version or 'unknown'} to {latest_version or 'latest'}...")
+    else:
+        print(f"  Creating venv for {spec.display_name}...")
     if venv_dir.exists():
         shutil.rmtree(venv_dir)
     subprocess.run(
@@ -398,7 +464,7 @@ def install_pypi_server(
     pip_exe = str(scripts_dir / _exe("pip"))
     print(f"  Installing {', '.join(spec.packages)}...")
     subprocess.run(
-        [pip_exe, "install", *spec.packages],
+        [pip_exe, "install", "--upgrade", *spec.packages],
         check=True,
         capture_output=True,
     )
@@ -443,9 +509,17 @@ def make_configured_server(spec: ServerSpec | PypiServerSpec, executable_path: P
     if isinstance(spec, ServerSpec) and spec.kind == "node-wrapper":
         command = "node"
         args = [exe_str, *spec.launch_args]
+        protocol_launch_args = {
+            protocol: [exe_str, *launch_args]
+            for protocol, launch_args in spec.protocol_launch_args.items()
+        }
     else:
         command = exe_str
         args = list(spec.launch_args)
+        protocol_launch_args = {
+            protocol: list(launch_args)
+            for protocol, launch_args in spec.protocol_launch_args.items()
+        }
     return ConfiguredServer(
         id=spec.id,
         display_name=spec.display_name,
@@ -455,6 +529,8 @@ def make_configured_server(spec: ServerSpec | PypiServerSpec, executable_path: P
         enabled=True,
         kind=spec.kind,
         notes=list(spec.notes),
+        protocols=list(spec.protocols),
+        protocol_launch_args=protocol_launch_args,
         source_path=exe_str,
         version_label=version_label,
     )
@@ -507,6 +583,7 @@ def write_downloaded_config(servers: list[ConfiguredServer], config_path: Path) 
                     **({"benchmarkArgs": list(s.benchmark_args)} if s.benchmark_args else {}),
                 },
                 "notes": list(s.notes),
+                "protocols": list(s.protocols),
             }
             for s in servers
         ],

@@ -45,6 +45,38 @@ class CliTests(unittest.TestCase):
         exit_code = main(["list-benchmarks", "--benchmark-root", str(Path(__file__).parent / "fixtures")])
         self.assertEqual(exit_code, 0)
 
+    def test_list_benchmarks_can_filter_by_protocol(self) -> None:
+        stdout = io.StringIO()
+        with redirect_stdout(stdout):
+            exit_code = main(["list-benchmarks", "--protocol", "tsp"])
+
+        self.assertEqual(exit_code, 0)
+        output = stdout.getvalue()
+        self.assertIn("tsp_core:", output)
+        self.assertNotIn("pandas:", output)
+
+    def test_run_benchmark_can_filter_by_protocol(self) -> None:
+        server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_path = Path(temp_dir) / "tsp-only.json"
+            exit_code = main(
+                [
+                    "run-benchmark",
+                    "--server-command",
+                    sys.executable,
+                    "--server-arg",
+                    str(server_script),
+                    "--protocol",
+                    "tsp",
+                    "--output",
+                    str(output_path),
+                ]
+            )
+            self.assertEqual(exit_code, 0)
+            report = json.loads(output_path.read_text(encoding="utf-8"))
+            self.assertIn("tsp_core", report["requested_benchmarks"])
+            self.assertNotIn("pandas", report["requested_benchmarks"])
+
     def test_list_servers_marks_configured_baseline_inline(self) -> None:
         server_script = Path(__file__).parent / "fixtures" / "fake_lsp_server.py"
         with tempfile.TemporaryDirectory() as temp_dir:

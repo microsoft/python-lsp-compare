@@ -1,0 +1,105 @@
+{
+  "name": "tsp_core",
+  "description": "Benchmark Pyrefly TSP type queries across simple builtins, generics, and flow-sensitive analysis.",
+  "protocol": "tsp",
+  "workspace_dir": "src",
+  "iterations": 5,
+  "warmup_iterations": 1,
+  "tsp_points": [
+    {
+      "label": "builtin int computed type",
+      "request": "typeServer/getComputedType",
+      "file": "src/builtins_basic.py",
+      "start_line": 0,
+      "start_character": 0,
+      "end_line": 0,
+      "end_character": 5,
+      "validation": {
+        "requireNonEmpty": true,
+        "minSizeChars": 10
+      }
+    },
+    {
+      "label": "list declared type",
+      "request": "typeServer/getDeclaredType",
+      "file": "src/builtins_basic.py",
+      "start_line": 2,
+      "start_character": 0,
+      "end_line": 2,
+      "end_character": 5,
+      "validation": {
+        "requireNonEmpty": true,
+        "minSizeChars": 10
+      }
+    },
+    {
+      "label": "generic specialization computed type",
+      "request": "typeServer/getComputedType",
+      "file": "src/generics.py",
+      "start_line": 7,
+      "start_character": 7,
+      "end_line": 7,
+      "end_character": 24,
+      "validation": {
+        "requireNonEmpty": true,
+        "minSizeChars": 10
+      }
+    },
+    {
+      "label": "flow narrowed branch type",
+      "request": "typeServer/getComputedType",
+      "file": "src/flow_narrowing.py",
+      "start_line": 4,
+      "start_character": 15,
+      "end_line": 4,
+      "end_character": 20,
+      "validation": {
+        "requireNonEmpty": true,
+        "minSizeChars": 10
+      }
+    },
+    {
+      "label": "stdlib path computed type",
+      "request": "typeServer/getComputedType",
+      "file": "src/stdlib_types.py",
+      "start_line": 3,
+      "start_character": 0,
+      "end_line": 3,
+      "end_character": 4,
+      "validation": {
+        "requireNonEmpty": true,
+        "minSizeChars": 10
+      }
+    },
+    {
+      "label": "function argument expected type",
+      "request": "typeServer/getExpectedType",
+      "file": "src/expected_types.py",
+      "start_line": 4,
+      "start_character": 4,
+      "end_line": 4,
+      "end_character": 5,
+      "validation": {
+        "requireNonEmpty": true,
+        "minSizeChars": 10
+      }
+    }
+  ],
+  "tsp_edit_points": [
+    {
+      "label": "edited narrowing recomputes type",
+      "request": "typeServer/getComputedType",
+      "file": "src/flow_narrowing.py",
+      "edit_line": 0,
+      "edit_text": "temp_value = 1",
+      "query_start_line": 4,
+      "query_start_character": 15,
+      "query_end_line": 4,
+      "query_end_character": 20,
+      "validation": {
+        "requireNonEmpty": true,
+        "minSizeChars": 10
+      }
+    }
+  ]
+}

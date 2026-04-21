@@ -35,11 +35,13 @@ def _build_benchmark_rows(
     baseline_server: dict[str, Any] | None,
 ) -> list[dict[str, object]]:
     rows: list[dict[str, object]] = []
-    suite_order = summary.get("requested_benchmarks") or _ordered_unique(
+    discovered_suite_order = _ordered_unique(
         report.get("name")
         for server in servers
         for report in server["report"].get("benchmark_reports", [])
     )
+    requested_suite_order = summary.get("requested_benchmarks") if isinstance(summary.get("requested_benchmarks"), list) else []
+    suite_order = _ordered_unique([*requested_suite_order, *discovered_suite_order])
     for suite_name in suite_order:
         suite_servers = []
         for server in servers:
@@ -61,14 +63,14 @@ def _build_benchmark_rows(
                 if baseline_point is not None:
                     baseline_metrics = _measured_request_metrics(baseline_point)
                     metric_key, metric_label = _preferred_result_metric(baseline_point.get("method"), baseline_metrics)
-                    baseline_value = _mean_numeric(baseline_metrics, metric_key) if metric_key is not None else None
+                    baseline_value = _metric_value(baseline_metrics, metric_key) if metric_key is not None else None
             for server in suite_servers:
                 point = _find_point(server["suite_report"].get("points", []), point_key)
                 if point is None:
                     continue
                 measured_metrics = _measured_request_metrics(point)
                 metric_key, metric_label = _preferred_result_metric(point.get("method"), measured_metrics)
-                point_value = _mean_numeric(measured_metrics, metric_key) if metric_key is not None else None
+                point_value = _metric_value(measured_metrics, metric_key) if metric_key is not None else None
                 if baseline_value is None and baseline_server is None:
                     baseline_value = point_value
                 rows.append(
@@ -88,7 +90,7 @@ def _build_benchmark_rows(
                         "result_metric_name": metric_key or "",
                         "result_metric_label": metric_label or "",
                         "result_metric_value": point_value,
-                        "result_metric_delta": None if baseline_value is None or point_value is None else point_value - baseline_value,
+                        "result_metric_delta": _metric_delta(point_value, baseline_value),
                         "validation_passed": point.get("summary", {}).get("validation", {}).get("passed", True),
                         "validation_failure_count": point.get("summary", {}).get("validation", {}).get("failure_count", 0),
                     }
@@ -112,14 +114,14 @@ def _build_scenario_rows(
         baseline_report = _find_by_name(baseline_reports, scenario_name)
         baseline_metrics = [] if baseline_report is None else _request_metrics(baseline_report.get("metrics", []))
         baseline_metric_key, baseline_metric_label = _preferred_result_metric_for_scenario(scenario_name, baseline_metrics)
-        baseline_value = None if baseline_report is None or baseline_metric_key is None else _mean_numeric(baseline_metrics, baseline_metric_key)
+        baseline_value = None if baseline_report is None or baseline_metric_key is None else _metric_value(baseline_metrics, baseline_metric_key)
         for server in servers:
             report = _find_by_name(server["report"].get("scenario_reports", []), scenario_name)
             if report is None:
                 continue
             request_metrics = _request_metrics(report.get("metrics", []))
             metric_key, metric_label = _preferred_result_metric_for_scenario(scenario_name, request_metrics)
-            metric_value = None if metric_key is None else _mean_numeric(request_metrics, metric_key)
+            metric_value = None if metric_key is None else _metric_value(request_metrics, metric_key)
             if baseline_value is None and baseline_server is None:
                 baseline_value = metric_value
             rows.append(
@@ -139,7 +141,7 @@ def _build_scenario_rows(
                     "result_metric_name": metric_key or baseline_metric_key or "",
                     "result_metric_label": metric_label or baseline_metric_label or "",
                     "result_metric_value": metric_value,
-                    "result_metric_delta": None if baseline_value is None or metric_value is None else metric_value - baseline_value,
+                    "result_metric_delta": _metric_delta(metric_value, baseline_value),
                     "validation_passed": True,
                     "validation_failure_count": 0,
                 }
@@ -185,6 +187,9 @@ def _preferred_result_metric(method: str | None, metrics: list[dict[str, Any]]) 
         "textDocument/references": ("location_count", "References found"),
         "textDocument/documentSymbol": ("symbol_count", "Symbols found"),
         "textDocument/hover": ("hover_text_char_count", "Hover length"),
+        "typeServer/getComputedType": ("type_name", "Type name"),
+        "typeServer/getDeclaredType": ("type_name", "Type name"),
+        "typeServer/getExpectedType": ("type_name", "Type name"),
     }
     if method in candidates:
         key, label = candidates[method]
@@ -212,18 +217,35 @@ def _preferred_result_metric_for_scenario(scenario_name: str, metrics: list[dict
     return None, None
 
 
-def _mean_numeric(metrics: list[dict[str, Any]], key: str | None) -> float | None:
+def _metric_value(metrics: list[dict[str, Any]], key: str | None) -> float | str | None:
     if key is None:
         return None
-    values: list[float] = []
+    numeric_values: list[float] = []
+    text_values: list[str] = []
     for metric in metrics:
         value = metric.get("result_summary", {}).get(key)
-        if isinstance(value, bool) or not isinstance(value, (int, float)):
+        if isinstance(value, bool):
             continue
-        values.append(float(value))
-    if not values:
+        if isinstance(value, (int, float)):
+            numeric_values.append(float(value))
+        elif isinstance(value, str):
+            text_values.append(value)
+    if numeric_values:
+        return sum(numeric_values) / len(numeric_values)
+    if text_values:
+        counts: dict[str, int] = {}
+        for value in text_values:
+            counts[value] = counts.get(value, 0) + 1
+        return sorted(counts.items(), key=lambda item: (-item[1], item[0]))[0][0]
+    return None
+
+
+def _metric_delta(value: float | str | None, baseline: float | str | None) -> float | str | None:
+    if value is None or baseline is None:
         return None
-    return sum(values) / len(values)
+    if isinstance(value, str) or isinstance(baseline, str):
+        return "same" if value == baseline else "different"
+    return value - baseline
 
 
 def _non_empty_rate(metrics: list[dict[str, Any]]) -> float | None:
