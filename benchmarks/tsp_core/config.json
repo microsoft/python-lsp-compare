@@ -49,9 +49,9 @@
       "label": "generic specialization computed type",
       "request": "typeServer/getComputedType",
       "file": "src/generics.py",
-      "start_line": 7,
+      "start_line": 9,
       "start_character": 7,
-      "end_line": 7,
+      "end_line": 9,
       "end_character": 24,
       "validation": {
         "requireNonEmpty": true,
