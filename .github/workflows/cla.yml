@@ -1,0 +1,39 @@
+name: Auto CLA (App Only)
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+jobs:
+  cla:
+    runs-on: ubuntu-latest
+
+    # ✅ Only run if PR was created by your GitHub App
+    if: |
+      github.event.pull_request.user.login == 'python-lsp-compare-bot' ||
+      github.event.pull_request.user.login == 'python-lsp-compare-bot[bot]'
+
+    steps:
+      - name: Check if CLA already posted
+        id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          comments=$(gh pr view ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --json comments -q '.comments[].body')
+
+          if echo "$comments" | grep -qi "microsoft-github-policy-service agree"; then
+            echo "already=true" >> $GITHUB_OUTPUT
+          else
+            echo "already=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post CLA agreement
+        if: steps.check.outputs.already == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.CLA_BOT_TOKEN }}
+        run: |
+          gh pr comment ${{ github.event.pull_request.number }} \
+            --repo ${{ github.repository }} \
+            --body '@microsoft-github-policy-service agree company="Microsoft"'
