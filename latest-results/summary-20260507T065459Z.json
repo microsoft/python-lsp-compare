@@ -17,12 +17,12 @@
     "tsp_semantic"
   ],
   "baseline_server": "pyright",
-  "generated_at": "20260506T065027Z",
+  "generated_at": "20260507T065459Z",
   "servers": [
     {
       "id": "pyright",
       "display_name": "Pyright",
-      "output_path": "results/bench-servers/pyright-20260506T065027Z.json",
+      "output_path": "results/bench-servers/pyright-20260507T065459Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
@@ -58,7 +58,7 @@
     {
       "id": "ty",
       "display_name": "Ty",
-      "output_path": "results/bench-servers/ty-20260506T065027Z.json",
+      "output_path": "results/bench-servers/ty-20260507T065459Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
@@ -91,8 +91,8 @@
     {
       "id": "pyrefly",
       "display_name": "Pyrefly",
-      "output_path": "results/bench-servers/pyrefly-20260506T065027Z.json",
-      "success": false,
+      "output_path": "results/bench-servers/pyrefly-20260507T065459Z.json",
+      "success": true,
       "benchmark_count": 8,
       "command": [
         "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyrefly/venv/bin/pyrefly",
@@ -104,7 +104,7 @@
       "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyrefly/venv/bin/pyrefly",
       "version": {
         "kind": "release",
-        "label": "0.63.1",
+        "label": "0.64.0",
         "repo_root": null,
         "commit": null,
         "short_commit": null,
@@ -131,7 +131,7 @@
     {
       "id": "pylsp-mypy",
       "display_name": "pylsp-mypy",
-      "output_path": "results/bench-servers/pylsp-mypy-20260506T065027Z.json",
+      "output_path": "results/bench-servers/pylsp-mypy-20260507T065459Z.json",
       "success": false,
       "benchmark_count": 6,
       "command": [
