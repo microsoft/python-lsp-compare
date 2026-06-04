@@ -17,12 +17,12 @@
     "tsp_semantic"
   ],
   "baseline_server": "pyright",
-  "generated_at": "20260603T073541Z",
+  "generated_at": "20260604T073256Z",
   "servers": [
     {
       "id": "pyright",
       "display_name": "Pyright",
-      "output_path": "results/bench-servers/pyright-20260603T073541Z.json",
+      "output_path": "results/bench-servers/pyright-20260604T073256Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
@@ -58,21 +58,21 @@
     {
       "id": "ty",
       "display_name": "Ty",
-      "output_path": "results/bench-servers/ty-20260603T073541Z.json",
+      "output_path": "results/bench-servers/ty-20260604T073256Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
-        "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.42/ty-x86_64-unknown-linux-gnu/ty",
+        "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.43/ty-x86_64-unknown-linux-gnu/ty",
         "server"
       ],
-      "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.42/ty-x86_64-unknown-linux-gnu/ty",
+      "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.43/ty-x86_64-unknown-linux-gnu/ty",
       "version": {
         "kind": "release",
-        "label": "0.0.42",
+        "label": "0.0.43",
         "repo_root": null,
         "commit": null,
         "short_commit": null,
-        "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.42/ty-x86_64-unknown-linux-gnu/ty"
+        "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.43/ty-x86_64-unknown-linux-gnu/ty"
       },
       "requested_benchmarks": [
         "data_science",
@@ -91,7 +91,7 @@
     {
       "id": "pyrefly",
       "display_name": "Pyrefly",
-      "output_path": "results/bench-servers/pyrefly-20260603T073541Z.json",
+      "output_path": "results/bench-servers/pyrefly-20260604T073256Z.json",
       "success": true,
       "benchmark_count": 8,
       "command": [
@@ -131,7 +131,7 @@
     {
       "id": "pylsp-mypy",
       "display_name": "pylsp-mypy",
-      "output_path": "results/bench-servers/pylsp-mypy-20260603T073541Z.json",
+      "output_path": "results/bench-servers/pylsp-mypy-20260604T073256Z.json",
       "success": false,
       "benchmark_count": 6,
       "command": [
