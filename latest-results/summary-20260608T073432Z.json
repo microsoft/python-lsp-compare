@@ -1,7 +1,6 @@
 {
   "config_path": "github-releases",
   "requested_servers": [
-    "pyright",
     "ty",
     "pyrefly",
     "pylsp-mypy"
@@ -17,48 +16,12 @@
     "tsp_semantic"
   ],
   "baseline_server": "pyright",
-  "generated_at": "20260607T071838Z",
+  "generated_at": "20260608T073432Z",
   "servers": [
-    {
-      "id": "pyright",
-      "display_name": "Pyright",
-      "output_path": "results/bench-servers/pyright-20260607T071838Z.json",
-      "success": true,
-      "benchmark_count": 6,
-      "command": [
-        "node",
-        "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.410/package/dist/pyright-langserver.js",
-        "--stdio"
-      ],
-      "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.410/package/dist/pyright-langserver.js",
-      "version": {
-        "kind": "release",
-        "label": "1.1.410",
-        "repo_root": null,
-        "commit": null,
-        "short_commit": null,
-        "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.410/package/dist/pyright-langserver.js"
-      },
-      "requested_benchmarks": [
-        "data_science",
-        "django",
-        "pandas",
-        "sqlalchemy",
-        "transformers",
-        "web"
-      ],
-      "benchmark_root": null,
-      "timeout_seconds": 300.0,
-      "install_requirements": true,
-      "environment_mode": "isolated",
-      "notes": [
-        "Requires Node.js to be installed."
-      ]
-    },
     {
       "id": "ty",
       "display_name": "Ty",
-      "output_path": "results/bench-servers/ty-20260607T071838Z.json",
+      "output_path": "results/bench-servers/ty-20260608T073432Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
@@ -91,7 +54,7 @@
     {
       "id": "pyrefly",
       "display_name": "Pyrefly",
-      "output_path": "results/bench-servers/pyrefly-20260607T071838Z.json",
+      "output_path": "results/bench-servers/pyrefly-20260608T073432Z.json",
       "success": true,
       "benchmark_count": 8,
       "command": [
@@ -131,7 +94,7 @@
     {
       "id": "pylsp-mypy",
       "display_name": "pylsp-mypy",
-      "output_path": "results/bench-servers/pylsp-mypy-20260607T071838Z.json",
+      "output_path": "results/bench-servers/pylsp-mypy-20260608T073432Z.json",
       "success": false,
       "benchmark_count": 6,
       "command": [
