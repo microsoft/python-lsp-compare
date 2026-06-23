@@ -10,7 +10,6 @@ jobs:
 
     # ✅ Only run if PR was created by your GitHub App
     if: |
-      github.event.pull_request.user.login == 'python-lsp-compare-bot' ||
       github.event.pull_request.user.login == 'python-lsp-compare-bot[bot]'
 
     steps:
