@@ -250,7 +250,7 @@ def _build_install_state(suite: BenchmarkSuite) -> dict[str, object]:
 
 
 def _install_state_path(python_executable: str) -> Path:
-    return Path(python_executable).resolve().parent.parent / ".python-lsp-compare-install.json"
+    return Path(python_executable).parent.parent / ".python-lsp-compare-install.json"
 
 
 def _venv_python_path(venv_root: Path) -> Path:
