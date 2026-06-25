@@ -17,27 +17,27 @@
     "tsp_semantic"
   ],
   "baseline_server": "pyright",
-  "generated_at": "20260624T070549Z",
+  "generated_at": "20260625T070552Z",
   "servers": [
     {
       "id": "pyright",
       "display_name": "Pyright",
-      "output_path": "results/bench-servers/pyright-20260624T070549Z.json",
+      "output_path": "results/bench-servers/pyright-20260625T070552Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
         "node",
-        "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.410/package/dist/pyright-langserver.js",
+        "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.411/package/dist/pyright-langserver.js",
         "--stdio"
       ],
-      "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.410/package/dist/pyright-langserver.js",
+      "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.411/package/dist/pyright-langserver.js",
       "version": {
         "kind": "release",
-        "label": "1.1.410",
+        "label": "1.1.411",
         "repo_root": null,
         "commit": null,
         "short_commit": null,
-        "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.410/package/dist/pyright-langserver.js"
+        "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/pyright/1.1.411/package/dist/pyright-langserver.js"
       },
       "requested_benchmarks": [
         "data_science",
@@ -58,21 +58,21 @@
     {
       "id": "ty",
       "display_name": "Ty",
-      "output_path": "results/bench-servers/ty-20260624T070549Z.json",
+      "output_path": "results/bench-servers/ty-20260625T070552Z.json",
       "success": true,
       "benchmark_count": 6,
       "command": [
-        "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.52/ty-x86_64-unknown-linux-gnu/ty",
+        "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.53/ty-x86_64-unknown-linux-gnu/ty",
         "server"
       ],
-      "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.52/ty-x86_64-unknown-linux-gnu/ty",
+      "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.53/ty-x86_64-unknown-linux-gnu/ty",
       "version": {
         "kind": "release",
-        "label": "0.0.52",
+        "label": "0.0.53",
         "repo_root": null,
         "commit": null,
         "short_commit": null,
-        "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.52/ty-x86_64-unknown-linux-gnu/ty"
+        "source_path": "/home/runner/work/python-lsp-compare/python-lsp-compare/.python-lsp-compare/servers/ty/0.0.53/ty-x86_64-unknown-linux-gnu/ty"
       },
       "requested_benchmarks": [
         "data_science",
@@ -91,7 +91,7 @@
     {
       "id": "pyrefly",
       "display_name": "Pyrefly",
-      "output_path": "results/bench-servers/pyrefly-20260624T070549Z.json",
+      "output_path": "results/bench-servers/pyrefly-20260625T070552Z.json",
       "success": true,
       "benchmark_count": 8,
       "command": [
@@ -131,7 +131,7 @@
     {
       "id": "pylsp-mypy",
       "display_name": "pylsp-mypy",
-      "output_path": "results/bench-servers/pylsp-mypy-20260624T070549Z.json",
+      "output_path": "results/bench-servers/pylsp-mypy-20260625T070552Z.json",
       "success": false,
       "benchmark_count": 6,
       "command": [
