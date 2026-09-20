@@ -1,8 +1,8 @@
 # Python LSP Benchmark Comparison
 
-Generated from `results/bench-servers/summary-20260919T060520Z.json`
+Generated from `results/bench-servers/summary-20260920T060502Z.json`
 
-- Generated at: 20260919T060520Z
+- Generated at: 20260920T060502Z
 - Config: `github-releases`
 - Servers: pyright, ty, pyrefly, pylsp-mypy
 - Baseline server: Pyright (pyright)
@@ -30,10 +30,10 @@ Generated from `results/bench-servers/summary-20260919T060520Z.json`
 
 | Server | Success | Benchmarks | Wall clock ms | Avg measured ms | Measured requests | Non-empty % | Failed points |
 | --- | --- | --- | ---: | ---: | ---: | ---: | ---: |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 6 | 4421.99 | 3.65 | 150 | 100% | 0 |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | no | 8 | 13664.98 | 31.51 | 205 | 97% | 2 |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 6 | 30793.11 | 50.68 | 150 | 97% | 0 |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | no | 6 | 171024.70 | 297.42 | 150 | 80% | 5 |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 6 | 5064.22 | 4.15 | 150 | 100% | 0 |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | no | 8 | 16195.86 | 35.92 | 205 | 97% | 2 |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 6 | 37020.03 | 66.24 | 150 | 97% | 0 |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | no | 6 | 215981.42 | 362.67 | 150 | 80% | 5 |
 
 *Wall clock ms includes server startup, warmup iterations, and shutdown — but excludes one-time environment creation and dependency installation.*
 
@@ -41,10 +41,10 @@ Generated from `results/bench-servers/summary-20260919T060520Z.json`
 
 | Server | Success | Wall clock ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 432.49 | 3.43 | 5 | 25 | 100% | 0 |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 971.18 | 20.61 | 5 | 25 | 100% | 0 |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 3595.50 | 55.57 | 5 | 25 | 100% | 0 |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | no | 6578.44 | 94.91 | 5 | 25 | 80% | 1 |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 508.93 | 4.04 | 5 | 25 | 100% | 0 |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 1209.05 | 22.76 | 5 | 25 | 100% | 0 |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 4464.37 | 74.44 | 5 | 25 | 100% | 0 |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | no | 7504.51 | 109.59 | 5 | 25 | 80% | 1 |
 
 ### dataframe completion
 
@@ -52,10 +52,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 1.37 | 1.64 | 100% | 223.00 | +22.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 5.18 | 9.76 | 100% | 201.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 63.33 | 248.00 | 100% | 250.00 | +49.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 171.41 | 477.14 | 100% | 188.00 | -13.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 1.64 | 1.74 | 100% | 223.00 | +22.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 6.10 | 9.69 | 100% | 201.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 79.97 | 312.75 | 100% | 250.00 | +49.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 207.20 | 475.99 | 100% | 188.00 | -13.00 | pass |
 
 ### dataframe describe hover
 
@@ -63,10 +63,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.24 | 0.26 | 100% | 4232.00 | +213.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.97 | 1.40 | 100% | 4019.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 4.65 | 5.97 | 100% | 3182.00 | -837.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 152.91 | 158.28 | 100% | 4134.00 | +115.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.33 | 0.35 | 100% | 4232.00 | +213.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 1.11 | 1.33 | 100% | 4019.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 2.51 | 2.71 | 100% | 3182.00 | -837.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 174.00 | 176.29 | 100% | 4134.00 | +115.00 | pass |
 
 ### summarize definition
 
@@ -74,10 +74,10 @@ Method: `textDocument/definition`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Definitions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.14 | 0.15 | 100% | 1.00 | 0.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.31 | 0.37 | 100% | 1.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 0.80 | 0.82 | 100% | 1.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 2.05 | 4.48 | 100% | 1.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.22 | 0.23 | 100% | 1.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.33 | 0.45 | 100% | 1.00 | 0.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.41 | 0.49 | 100% | 1.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 1.05 | 1.12 | 100% | 1.00 | 0.00 | pass |
 
 ### edit array then complete (edit+completion)
 
@@ -85,10 +85,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | no | 3.14 | 3.35 | 0% | 0.00 | -168.00 | fail (10) |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 10.81 | 13.00 | 100% | 168.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 30.15 | 78.24 | 100% | 149.00 | -19.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 246.72 | 356.47 | 100% | 168.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | no | 4.07 | 4.21 | 0% | 0.00 | -168.00 | fail (10) |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 12.12 | 13.26 | 100% | 168.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 28.52 | 76.02 | 100% | 149.00 | -19.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 334.90 | 447.71 | 100% | 168.00 | 0.00 | pass |
 
 ### edit array then hover (edit+hover)
 
@@ -96,10 +96,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 2.86 | 4.68 | 100% | 2546.00 | +2268.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 4.56 | 4.58 | 100% | 267.00 | -11.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 24.67 | 26.02 | 100% | 278.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 146.29 | 147.32 | 100% | 5662.00 | +5384.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 2.50 | 2.51 | 100% | 2546.00 | +2268.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 5.87 | 5.92 | 100% | 267.00 | -11.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 29.67 | 33.89 | 100% | 278.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 161.63 | 162.43 | 100% | 5662.00 | +5384.00 | pass |
 
 ### Result Differences
 
@@ -112,10 +112,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Wall clock ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 221.38 | 2.20 | 5 | 25 | 100% | 0 |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 304.90 | 4.25 | 5 | 25 | 100% | 0 |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 1201.39 | 11.47 | 5 | 25 | 100% | 0 |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 6281.59 | 141.99 | 5 | 25 | 100% | 0 |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 254.68 | 2.58 | 5 | 25 | 100% | 0 |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 292.74 | 4.77 | 5 | 25 | 100% | 0 |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 1423.89 | 13.61 | 5 | 25 | 100% | 0 |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 7536.60 | 171.60 | 5 | 25 | 100% | 0 |
 
 ### queryset completion
 
@@ -123,10 +123,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 4.17 | 5.96 | 100% | 261.00 | +251.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 4.56 | 6.68 | 100% | 10.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 13.01 | 50.08 | 100% | 15.00 | +5.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 170.62 | 527.36 | 100% | 2.00 | -8.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 4.69 | 7.08 | 100% | 261.00 | +251.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 4.77 | 7.78 | 100% | 10.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 15.28 | 60.22 | 100% | 15.00 | +5.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 219.46 | 581.88 | 100% | 2.00 | -8.00 | pass |
 
 ### queryset filter hover
 
@@ -134,10 +134,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.15 | 0.18 | 100% | 46.00 | -11.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.41 | 0.46 | 100% | 57.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 2.09 | 2.92 | 100% | 298.00 | +241.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 134.19 | 138.09 | 100% | 57.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.24 | 0.26 | 100% | 46.00 | -11.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.28 | 0.31 | 100% | 298.00 | +241.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.54 | 0.57 | 100% | 57.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 151.07 | 151.81 | 100% | 57.00 | 0.00 | pass |
 
 ### model definition
 
@@ -145,10 +145,10 @@ Method: `textDocument/definition`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Definitions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.12 | 0.14 | 100% | 1.00 | 0.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.33 | 0.40 | 100% | 1.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.48 | 1.57 | 100% | 1.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 0.77 | 0.80 | 100% | 1.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.20 | 0.21 | 100% | 1.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.24 | 0.27 | 100% | 1.00 | 0.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.40 | 0.44 | 100% | 1.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 1.06 | 1.08 | 100% | 1.00 | 0.00 | pass |
 
 ### edit queryset then complete (edit+completion)
 
@@ -156,10 +156,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 4.00 | 4.67 | 100% | 104.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 4.47 | 4.95 | 100% | 83.00 | -21.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 20.74 | 22.23 | 100% | 104.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 201.63 | 248.17 | 100% | 143.00 | +39.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 3.70 | 9.19 | 100% | 83.00 | -21.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 4.61 | 4.81 | 100% | 104.00 | 0.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 25.06 | 27.03 | 100% | 104.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 244.29 | 277.96 | 100% | 143.00 | +39.00 | pass |
 
 ### edit queryset then hover (edit+hover)
 
@@ -167,10 +167,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 1.21 | 3.27 | 100% | 858.00 | +775.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 2.56 | 2.59 | 100% | 100.00 | +17.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 31.33 | 36.36 | 100% | 83.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 202.75 | 207.06 | 100% | 71.00 | -12.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 3.18 | 3.20 | 100% | 100.00 | +17.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 4.34 | 13.53 | 100% | 858.00 | +775.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 37.27 | 44.59 | 100% | 83.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 242.12 | 249.87 | 100% | 71.00 | -12.00 | pass |
 
 ### Result Differences
 
@@ -183,10 +183,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Wall clock ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 752.10 | 7.32 | 5 | 25 | 100% | 0 |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 1072.01 | 27.54 | 5 | 25 | 100% | 0 |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 7671.94 | 91.36 | 5 | 25 | 100% | 0 |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 6536.89 | 109.43 | 5 | 25 | 100% | 0 |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 834.74 | 7.94 | 5 | 25 | 100% | 0 |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 1279.83 | 32.96 | 5 | 25 | 100% | 0 |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 7615.56 | 134.28 | 5 | 25 | 100% | 0 |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 10452.25 | 145.07 | 5 | 25 | 100% | 0 |
 
 ### report dataframe completion
 
@@ -194,10 +194,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 15.32 | 18.55 | 100% | 1000.00 | +728.80 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 46.75 | 59.69 | 100% | 6.00 | -265.20 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 67.09 | 223.45 | 100% | 271.20 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 78.79 | 314.55 | 100% | 16.00 | -255.20 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 18.03 | 21.61 | 100% | 1000.00 | +728.80 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 80.83 | 280.50 | 100% | 271.20 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 86.60 | 345.56 | 100% | 16.00 | -255.20 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 91.21 | 220.62 | 100% | 6.00 | -265.20 | pass |
 
 ### dataframe groupby hover
 
@@ -205,10 +205,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.21 | 0.25 | 100% | 329.00 | -21.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.62 | 0.69 | 100% | 350.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 1.81 | 1.99 | 100% | 2759.00 | +2409.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 160.59 | 163.14 | 100% | 301.00 | -49.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.28 | 0.33 | 100% | 329.00 | -21.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.67 | 0.73 | 100% | 350.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 2.37 | 2.50 | 100% | 2759.00 | +2409.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 185.91 | 188.41 | 100% | 301.00 | -49.00 | pass |
 
 ### build report definition
 
@@ -216,10 +216,10 @@ Method: `textDocument/definition`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Definitions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.15 | 0.17 | 100% | 1.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.24 | 0.41 | 100% | 1.00 | 0.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.32 | 0.50 | 100% | 1.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 0.82 | 0.84 | 100% | 1.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.20 | 0.21 | 100% | 1.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.22 | 0.24 | 100% | 1.00 | 0.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.44 | 0.51 | 100% | 1.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 1.07 | 1.09 | 100% | 1.00 | 0.00 | pass |
 
 ### edit dataframe then complete (edit+completion)
 
@@ -227,10 +227,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 16.85 | 17.43 | 100% | 448.00 | +8.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 30.46 | 52.47 | 100% | 256.00 | -184.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 184.21 | 190.03 | 100% | 441.00 | +1.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 378.06 | 861.92 | 100% | 440.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 16.37 | 17.70 | 100% | 448.00 | +8.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 68.00 | 98.37 | 100% | 256.00 | -184.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 215.66 | 217.79 | 100% | 441.00 | +1.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 633.01 | 1277.63 | 100% | 440.00 | 0.00 | pass |
 
 ### edit dataframe then hover (edit+hover)
 
@@ -238,10 +238,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 4.06 | 4.11 | 100% | 4441.00 | +149.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 10.73 | 12.97 | 100% | 4292.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 26.40 | 79.51 | 100% | 943.00 | -3349.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 154.78 | 157.59 | 100% | 232.00 | -4060.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 4.84 | 4.87 | 100% | 4441.00 | +149.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 7.58 | 14.78 | 100% | 943.00 | -3349.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 10.38 | 12.11 | 100% | 4292.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 177.53 | 178.02 | 100% | 232.00 | -4060.00 | pass |
 
 ### Result Differences
 
@@ -254,10 +254,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Wall clock ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 308.57 | 2.16 | 5 | 25 | 100% | 0 |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 715.36 | 15.44 | 5 | 25 | 100% | 0 |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 2944.70 | 38.60 | 5 | 25 | 100% | 0 |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | no | 5866.43 | 96.59 | 5 | 25 | 60% | 2 |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 366.23 | 2.61 | 5 | 25 | 100% | 0 |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 887.45 | 20.01 | 5 | 25 | 100% | 0 |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 3617.68 | 48.49 | 5 | 25 | 100% | 0 |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | no | 6906.74 | 117.75 | 5 | 25 | 60% | 2 |
 
 ### query completion
 
@@ -265,10 +265,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 2.87 | 6.54 | 100% | 1.00 | 0.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 5.62 | 8.78 | 100% | 1.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 65.55 | 261.47 | 100% | 15.00 | +14.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 160.16 | 341.84 | 100% | 1.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 3.35 | 7.77 | 100% | 1.00 | 0.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 7.29 | 11.46 | 100% | 1.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 81.37 | 323.24 | 100% | 15.00 | +14.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 187.53 | 444.57 | 100% | 1.00 | 0.00 | pass |
 
 ### sessionmaker hover
 
@@ -276,10 +276,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.31 | 0.32 | 100% | 10621.00 | +49.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.94 | 1.06 | 100% | 10572.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 4.72 | 5.83 | 100% | 15232.00 | +4660.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 263.07 | 265.34 | 100% | 10498.00 | -74.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.39 | 0.41 | 100% | 10621.00 | +49.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 1.05 | 1.09 | 100% | 15232.00 | +4660.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 1.32 | 1.60 | 100% | 10572.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 322.63 | 325.25 | 100% | 10498.00 | -74.00 | pass |
 
 ### mapped class definition
 
@@ -287,10 +287,10 @@ Method: `textDocument/definition`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Definitions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.16 | 0.16 | 100% | 2.00 | +1.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.31 | 0.35 | 100% | 1.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 0.89 | 1.07 | 100% | 1.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 3.17 | 5.36 | 100% | 1.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.21 | 0.22 | 100% | 2.00 | +1.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.25 | 0.30 | 100% | 1.00 | 0.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.43 | 0.61 | 100% | 1.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 1.09 | 1.11 | 100% | 1.00 | 0.00 | pass |
 
 ### edit query then complete (edit+completion)
 
@@ -298,10 +298,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 3.34 | 9.58 | 100% | 17.00 | -21.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 4.00 | 4.69 | 100% | 23.00 | -15.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | no | 28.96 | 30.12 | 0% | 0.00 | -38.00 | fail (10) |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 113.06 | 160.64 | 100% | 38.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 4.74 | 5.11 | 100% | 23.00 | -15.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 11.56 | 29.04 | 100% | 17.00 | -21.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | no | 38.48 | 38.83 | 0% | 0.00 | -38.00 | fail (10) |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 140.78 | 195.19 | 100% | 38.00 | 0.00 | pass |
 
 ### edit session then hover (edit+hover)
 
@@ -309,10 +309,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.40 | 0.41 | 100% | 2246.00 | +1346.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 3.46 | 3.49 | 100% | 958.00 | +58.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | no | 29.88 | 30.63 | 0% | 0.00 | -900.00 | fail (10) |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 73.05 | 83.98 | 100% | 900.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 4.36 | 4.41 | 100% | 958.00 | +58.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 5.79 | 5.83 | 100% | 2246.00 | +1346.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | no | 39.03 | 39.16 | 0% | 0.00 | -900.00 | fail (10) |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 92.64 | 101.41 | 100% | 900.00 | 0.00 | pass |
 
 ### Result Differences
 
@@ -326,10 +326,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Wall clock ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 2359.67 | 4.09 | 5 | 25 | 100% | 0 |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 14086.11 | 99.62 | 5 | 25 | 80% | 0 |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 4546.02 | 144.28 | 5 | 25 | 80% | 0 |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | no | 141794.59 | 1258.73 | 5 | 25 | 40% | 2 |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 2687.92 | 4.71 | 5 | 25 | 100% | 0 |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 15536.80 | 106.90 | 5 | 25 | 80% | 0 |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 5691.94 | 182.07 | 5 | 25 | 80% | 0 |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | no | 181644.97 | 1537.19 | 5 | 25 | 40% | 2 |
 
 ### classifier pipeline completion
 
@@ -337,10 +337,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 9.67 | 10.81 | 100% | 777.00 | +654.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 52.92 | 74.55 | 100% | 123.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 115.49 | 119.28 | 100% | 2.00 | -121.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 720.43 | 2881.01 | 100% | 15.00 | -108.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 11.21 | 12.55 | 100% | 777.00 | +654.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 50.56 | 84.85 | 100% | 123.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 143.48 | 145.03 | 100% | 2.00 | -121.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 892.88 | 3547.18 | 100% | 15.00 | -108.00 | pass |
 
 ### pipeline hover
 
@@ -348,10 +348,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.15 | 0.18 | 100% | 48.00 | +14.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.17 | 0.19 | 100% | 7.00 | -27.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.48 | 0.60 | 100% | 34.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | no | 2245.39 | 2297.45 | 0% | 0.00 | -34.00 | fail (10) |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.23 | 0.25 | 100% | 7.00 | -27.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.26 | 0.27 | 100% | 48.00 | +14.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.45 | 0.51 | 100% | 34.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | no | 2737.24 | 2765.12 | 0% | 0.00 | -34.00 | fail (10) |
 
 ### auto tokenizer definition
 
@@ -359,10 +359,10 @@ Method: `textDocument/definition`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Definitions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.16 | 0.16 | 100% | 1.00 | 0.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.22 | 0.23 | 100% | 1.00 | 0.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.38 | 0.43 | 100% | 1.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 1827.95 | 1887.77 | 100% | 1.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.28 | 0.29 | 100% | 1.00 | 0.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.43 | 0.47 | 100% | 1.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.45 | 1.07 | 100% | 1.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 2172.17 | 2196.45 | 100% | 1.00 | 0.00 | pass |
 
 ### edit prediction then complete (edit+completion)
 
@@ -370,10 +370,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.35 | 0.43 | 0% | 0.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 1.89 | 1.98 | 0% | 0.00 | 0.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 5.47 | 6.59 | 100% | 23.00 | +23.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 5.51 | 6.89 | 0% | 0.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 2.63 | 2.85 | 0% | 0.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 6.01 | 6.11 | 100% | 23.00 | +23.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 6.67 | 7.92 | 0% | 0.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 14.67 | 28.27 | 0% | 0.00 | 0.00 | pass |
 
 ### edit tokenizer then hover (edit+hover)
 
@@ -381,10 +381,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.29 | 0.32 | 100% | 33.00 | +3.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 4.92 | 5.08 | 100% | 7.00 | -23.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 438.81 | 454.04 | 100% | 30.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | no | 2102.90 | 2132.38 | 0% | 0.00 | -30.00 | fail (10) |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 2.08 | 5.26 | 100% | 33.00 | +3.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 5.82 | 5.94 | 100% | 7.00 | -23.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 476.39 | 505.54 | 100% | 30.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | no | 2630.44 | 2651.58 | 0% | 0.00 | -30.00 | fail (10) |
 
 ### Result Differences
 
@@ -397,10 +397,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Wall clock ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 347.78 | 2.70 | 5 | 25 | 100% | 0 |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 1293.47 | 7.43 | 5 | 25 | 100% | 0 |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 736.65 | 12.20 | 5 | 25 | 100% | 0 |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 3966.75 | 82.85 | 5 | 25 | 100% | 0 |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 411.72 | 3.04 | 5 | 25 | 100% | 0 |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 1525.05 | 8.97 | 5 | 25 | 100% | 0 |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 884.96 | 13.61 | 5 | 25 | 100% | 0 |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 4773.03 | 105.62 | 5 | 25 | 100% | 0 |
 
 ### request args completion
 
@@ -408,10 +408,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 4.87 | 7.79 | 100% | 14.00 | 0.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 4.97 | 7.42 | 100% | 467.00 | +453.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 52.30 | 149.92 | 100% | 487.80 | +473.80 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 60.09 | 124.00 | 100% | 1.00 | -13.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 4.46 | 8.02 | 100% | 14.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 5.83 | 8.36 | 100% | 467.00 | +453.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 56.24 | 187.16 | 100% | 487.80 | +473.80 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 67.24 | 109.98 | 100% | 1.00 | -13.00 | pass |
 
 ### client session hover
 
@@ -419,10 +419,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.15 | 0.17 | 100% | 7.00 | -19.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.42 | 0.50 | 100% | 26.00 | 0.00 | pass |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 4.85 | 17.22 | 100% | 167.00 | +141.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 56.73 | 140.77 | 100% | 359.00 | +333.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.21 | 0.24 | 100% | 7.00 | -19.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.50 | 0.56 | 100% | 26.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 5.29 | 18.48 | 100% | 167.00 | +141.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 82.78 | 204.28 | 100% | 359.00 | +333.00 | pass |
 
 ### client references
 
@@ -430,10 +430,10 @@ Method: `textDocument/references`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | References found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.26 | 0.28 | 100% | 2.00 | 0.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 0.58 | 0.74 | 100% | 2.00 | 0.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 0.60 | 0.68 | 100% | 2.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 41.05 | 105.24 | 100% | 2.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.33 | 0.35 | 100% | 2.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 0.69 | 0.77 | 100% | 2.00 | 0.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 0.72 | 0.87 | 100% | 2.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 65.26 | 121.86 | 100% | 2.00 | 0.00 | pass |
 
 ### edit response then complete (edit+completion)
 
@@ -441,10 +441,10 @@ Method: `textDocument/completion`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Completions found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 2.39 | 3.81 | 100% | 32.00 | -173.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 4.28 | 5.94 | 100% | 205.00 | 0.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 5.11 | 6.85 | 100% | 225.00 | +20.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 68.22 | 70.78 | 100% | 57.00 | -148.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 2.26 | 4.85 | 100% | 32.00 | -173.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 4.33 | 5.45 | 100% | 205.00 | 0.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 5.11 | 5.75 | 100% | 225.00 | +20.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 87.25 | 90.29 | 100% | 57.00 | -148.00 | pass |
 
 ### edit response then hover (edit+hover)
 
@@ -452,10 +452,10 @@ Method: `textDocument/hover`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Hover length | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 1.21 | 1.27 | 100% | 9977.00 | +9557.00 | pass |
-| [Ty](latest-results/ty-20260919T060520Z.json) | yes | 2.67 | 2.70 | 100% | 1555.00 | +1135.00 | pass |
-| [Pyright](latest-results/pyright-20260919T060520Z.json) | yes | 26.99 | 30.14 | 100% | 420.00 | 0.00 | pass |
-| [pylsp-mypy](latest-results/pylsp-mypy-20260919T060520Z.json) | yes | 188.18 | 191.05 | 100% | 880.00 | +460.00 | pass |
+| [Ty](latest-results/ty-20260920T060502Z.json) | yes | 3.34 | 3.36 | 100% | 1555.00 | +1135.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 3.93 | 5.82 | 100% | 9977.00 | +9557.00 | pass |
+| [Pyright](latest-results/pyright-20260920T060502Z.json) | yes | 34.83 | 40.48 | 100% | 420.00 | 0.00 | pass |
+| [pylsp-mypy](latest-results/pylsp-mypy-20260920T060502Z.json) | yes | 225.56 | 226.82 | 100% | 880.00 | +460.00 | pass |
 
 ### Result Differences
 
@@ -468,7 +468,7 @@ Method: `textDocument/hover`
 
 | Server | Success | Wall clock ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | no | 180.14 | 0.22 | 8 | 40 | 100% | 2 |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | no | 215.32 | 0.32 | 8 | 40 | 100% | 2 |
 
 ### builtins semantic tokens
 
@@ -476,7 +476,7 @@ Method: semantic token impl using typeServer/getComputedType
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Semantic tokens found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.70 | 0.77 | 100% | 30.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.98 | 1.03 | 100% | 30.00 | 0.00 | pass |
 
 ### builtin int computed type
 
@@ -484,7 +484,7 @@ Method: `typeServer/getComputedType`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Results found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.11 | 0.12 | 100% | 7.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.19 | 0.21 | 100% | 7.00 | 0.00 | pass |
 
 ### list declared type
 
@@ -492,7 +492,7 @@ Method: `typeServer/getDeclaredType`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Results found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.16 | 0.18 | 100% | 7.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.25 | 0.27 | 100% | 7.00 | 0.00 | pass |
 
 ### generic specialization computed type
 
@@ -500,7 +500,7 @@ Method: `typeServer/getComputedType`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Results found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.16 | 0.18 | 100% | 7.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.23 | 0.23 | 100% | 7.00 | 0.00 | pass |
 
 ### stdlib path computed type
 
@@ -508,7 +508,7 @@ Method: `typeServer/getComputedType`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Results found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.16 | 0.19 | 100% | 7.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.22 | 0.23 | 100% | 7.00 | 0.00 | pass |
 
 ### function argument expected type
 
@@ -516,13 +516,13 @@ Method: `typeServer/getExpectedType`
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Results found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 0.16 | 0.18 | 100% | 7.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 0.23 | 0.25 | 100% | 7.00 | 0.00 | pass |
 
 ## Benchmark: tsp_semantic
 
 | Server | Success | Wall clock ms | Avg measured ms | Points | Measured requests | Non-empty % | Failed points |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 5138.73 | 56.24 | 3 | 15 | 100% | 0 |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 5734.57 | 29.82 | 3 | 15 | 100% | 0 |
 
 ### django semantic tokens
 
@@ -530,7 +530,7 @@ Method: semantic token impl using typeServer/getComputedType
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Semantic tokens found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 11.46 | 18.41 | 100% | 126.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 20.95 | 39.20 | 100% | 126.00 | 0.00 | pass |
 
 ### transformers semantic tokens
 
@@ -538,7 +538,7 @@ Method: semantic token impl using typeServer/getComputedType
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Semantic tokens found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 121.30 | 125.26 | 100% | 74.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 61.31 | 66.54 | 100% | 74.00 | 0.00 | pass |
 
 ### stdlib semantic tokens
 
@@ -546,4 +546,4 @@ Method: semantic token impl using typeServer/getComputedType
 
 | Server | Success | Mean ms | P95 ms | Non-empty % | Semantic tokens found | Delta vs Pyright | Validation |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| [Pyrefly](latest-results/pyrefly-20260919T060520Z.json) | yes | 35.97 | 56.14 | 100% | 75.00 | 0.00 | pass |
+| [Pyrefly](latest-results/pyrefly-20260920T060502Z.json) | yes | 7.20 | 7.43 | 100% | 75.00 | 0.00 | pass |
