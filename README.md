@@ -166,6 +166,28 @@ Benchmark arguments:
 
 Benchmark runs always use an isolated suite environment and install each suite's declared requirements before launching the server. That keeps runs reproducible and avoids depending on whatever happens to be installed in the caller's active environment.
 
+## Automated Benchmark Updates
+
+The **Run Benchmarks** workflow (`.github/workflows/benchmark.yml`) runs daily at
+06:00 UTC and can also be started manually from the Actions tab. It runs the
+benchmarks and opens a pull request containing only `latest-results.md` and
+`latest-results/`, using the publishing GitHub App configured by the `APP_ID`
+and `APP_PRIVATE_KEY` repository secrets.
+
+After a results pull request is created or updated, a separate job approves that
+specific commit using a different GitHub App, configured by
+`PYTHON_LSP_COMPARE_REVIEW_BOT_APP_ID` and
+`PYTHON_LSP_COMPARE_REVIEW_BOT_PRIVATE_KEY`. It then enables squash auto-merge,
+provided the pull request still has the expected head commit. Repository
+auto-merge must be enabled, and required checks and branch protection rules still
+apply.
+
+The approval job does not check out or execute pull request code. Both jobs run
+from the original scheduled or manual workflow invocation; no
+`pull_request_target` trigger or event-policy exception is needed. Ordinary
+`pull_request` workflows continue to handle PR validation and the bot's CLA
+agreement.
+
 ## Report Shape
 
 Reports include:
