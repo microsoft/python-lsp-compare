@@ -78,7 +78,7 @@ jobs:
       PR_HEAD_SHA: ${{ needs.benchmark.outputs.pull-request-head-sha }}
     steps:
       - id: review-token
-        uses: tibdex/github-app-token@3beb63f4bd073e614825da76410c181273ba90b1 # v2.1.0
+        uses: tibdex/github-app-token@3beb63f4bd073e61482598c45c71c1019b59b73a # v2.1.0
         with:
           app_id: ${{ secrets.PYTHON_LSP_COMPARE_REVIEW_BOT_APP_ID }}
           private_key: ${{ secrets.PYTHON_LSP_COMPARE_REVIEW_BOT_PRIVATE_KEY }}
